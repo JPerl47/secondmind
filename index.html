@@ -3,157 +3,217 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0a0d18">
+<meta name="theme-color" content="#070a13">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.png">
 <link rel="icon" type="image/png" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <title>SecondMind — Live fully. We’ll remember.</title>
 <style>
   :root{
-    --bg:#0a0d18; --card:#131829; --card2:#1a2036; --border:#28304b;
-    --text:#e9ebf4; --muted:#98a0bb; --accent:#e2c188; --accent2:#ccd5eb;
-    --danger:#f87171; --ok:#34d399;
+    --bg:#070a13; --ink:#0e1326;
+    --card:rgba(255,255,255,.035); --card2:rgba(255,255,255,.05);
+    --border:rgba(255,255,255,.08); --border2:rgba(255,255,255,.14);
+    --text:#edeff6; --muted:#8f97b2;
+    --gold:#e7c88c; --goldSoft:rgba(231,200,140,.55); --silver:#c9d3ea;
+    --danger:#f38181; --ok:#4fd6a5;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
-  body{min-height:100vh;}
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;font-size:15px;}
+  body{min-height:100vh;position:relative}
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(900px 500px at 12% -8%, rgba(231,200,140,.075), transparent 60%),
+      radial-gradient(800px 520px at 92% 4%, rgba(160,178,220,.06), transparent 60%),
+      radial-gradient(1000px 700px at 50% 115%, rgba(90,110,170,.05), transparent 65%);}
+  #authView,#appView{position:relative;z-index:1}
   button{font-family:inherit}
   .hidden{display:none !important}
+  svg.i{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;
+    stroke-linecap:round;stroke-linejoin:round;vertical-align:-4px;flex:0 0 auto}
+
+  /* type system */
+  .wordmark{font-family:'Jost',sans-serif;font-weight:400;text-transform:uppercase;
+    letter-spacing:.32em;font-size:15px;
+    background:linear-gradient(100deg,#ecca8d,#f2e3c0 45%,#cdd5ea);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .eyebrow{font-size:11px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--goldSoft);margin:26px 2px 12px}
+  h2.sect{font-family:'Jost',sans-serif;font-weight:400;font-size:26px;letter-spacing:.01em;
+    margin:18px 2px 18px;color:var(--text)}
 
   /* Auth */
-  #authView{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
-  .authCard{width:100%;max-width:380px;background:var(--card);border:1px solid var(--border);
-    border-radius:18px;padding:28px 24px}
-  .logo{font-size:30px;font-weight:800;letter-spacing:-1px;text-align:center;
-    background:linear-gradient(100deg,#ecca8d,#f2e3c0 45%,#cdd5ea);
-    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin:0 0 4px}
-  .field{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:12px;
-    color:var(--text);font-size:16px;padding:13px 14px;margin-bottom:12px;outline:none}
-  .field:focus{border-color:var(--accent)}
-  .btn{display:block;width:100%;border:none;border-radius:12px;padding:14px;font-size:16px;
-    font-weight:700;cursor:pointer;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#141a2e}
+  #authView{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
+  .authCard{width:100%;max-width:390px}
+  .authCard img.hero{width:100%;border-radius:20px;display:block;margin-bottom:26px;
+    box-shadow:0 30px 80px rgba(0,0,0,.5)}
+  .field{width:100%;background:var(--card);border:1px solid var(--border);border-radius:14px;
+    color:var(--text);font-size:16px;padding:14px 16px;margin-bottom:12px;outline:none;
+    transition:border-color .2s, box-shadow .2s}
+  .field::placeholder{color:#5d6580}
+  .field:focus{border-color:var(--goldSoft);box-shadow:0 0 0 4px rgba(231,200,140,.08)}
+  .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:none;
+    border-radius:14px;padding:15px;font-size:15.5px;font-weight:600;letter-spacing:.02em;
+    cursor:pointer;background:linear-gradient(115deg,#e7c88c,#f0e0bd 45%,#c9d3ea);color:var(--ink);
+    box-shadow:0 10px 30px rgba(231,200,140,.18);transition:transform .15s, box-shadow .2s, filter .2s}
+  .btn:hover{filter:brightness(1.05)}
+  .btn:active{transform:translateY(1px)}
   .btn:disabled{opacity:.55}
-  .btnGhost{background:none;border:none;color:var(--muted);width:100%;padding:12px;font-size:14px;cursor:pointer}
+  .btnGhost{background:none;border:none;color:var(--muted);width:100%;padding:14px;font-size:14px;cursor:pointer}
   .authMsg{font-size:14px;color:var(--muted);text-align:center;min-height:20px;margin:10px 0 0}
   .authMsg.err{color:var(--danger)} .authMsg.ok{color:var(--ok)}
 
   /* App shell */
-  #appView{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+  #appView{padding-bottom:calc(112px + env(safe-area-inset-bottom))}
   header.top{display:flex;align-items:center;justify-content:space-between;
-    padding:14px 18px 10px;position:sticky;top:0;background:rgba(10,13,24,.92);
-    backdrop-filter:blur(10px);z-index:5}
-  header.top .logo{font-size:22px;text-align:left;margin:0}
+    padding:calc(env(safe-area-inset-top) + 16px) 20px 14px;position:sticky;top:0;z-index:5;
+    background:rgba(7,10,19,.75);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+  header.top::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(231,200,140,.25),rgba(201,211,234,.2),transparent)}
+  .brand{display:flex;align-items:center;gap:11px}
+  .brand img{height:26px;border-radius:6px}
   .hdrBtns{display:flex;gap:8px}
-  .iconBtn{background:none;border:1px solid var(--border);color:var(--muted);
-    border-radius:10px;padding:6px 12px;font-size:13px;cursor:pointer}
-  .iconBtn.on{color:var(--accent);border-color:var(--accent)}
-  main{padding:6px 16px 24px;max-width:640px;margin:0 auto}
+  .iconBtn{display:inline-flex;align-items:center;gap:7px;background:var(--card);
+    border:1px solid var(--border);color:var(--muted);border-radius:11px;padding:8px 13px;
+    font-size:13px;font-weight:500;cursor:pointer;transition:all .2s}
+  .iconBtn:hover{color:var(--text);border-color:var(--border2)}
+  .iconBtn.on{color:var(--gold);border-color:rgba(231,200,140,.4);background:rgba(231,200,140,.07)}
+  .iconBtn svg.i{width:16px;height:16px}
+  main{padding:8px 18px 24px;max-width:620px;margin:0 auto}
 
-  /* Bottom nav */
-  nav.tabs{position:fixed;bottom:0;left:0;right:0;display:flex;
-    background:rgba(12,16,29,.97);border-top:1px solid var(--border);
-    padding-bottom:env(safe-area-inset-bottom);z-index:10}
-  nav.tabs button{flex:1;background:none;border:none;color:var(--muted);
-    padding:10px 0 8px;font-size:11px;cursor:pointer;display:flex;flex-direction:column;
-    align-items:center;gap:2px}
-  nav.tabs button .ico{font-size:22px;line-height:1}
-  nav.tabs button.active{color:var(--accent)}
-
-  h2.sect{font-size:18px;margin:14px 2px 12px}
-  .subHead{font-size:13px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;
-    color:var(--muted);margin:20px 2px 10px}
+  /* Floating dock */
+  nav.dock{position:fixed;left:50%;transform:translateX(-50%);
+    bottom:calc(14px + env(safe-area-inset-bottom));z-index:10;
+    display:flex;gap:4px;padding:7px;border-radius:22px;
+    background:rgba(13,17,31,.78);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
+    border:1px solid var(--border);box-shadow:0 20px 50px rgba(0,0,0,.55);
+    width:min(430px, calc(100vw - 24px))}
+  nav.dock button{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
+    background:none;border:none;color:var(--muted);padding:9px 0 8px;font-size:10.5px;
+    font-weight:500;letter-spacing:.04em;cursor:pointer;border-radius:16px;transition:all .2s}
+  nav.dock button svg.i{width:21px;height:21px}
+  nav.dock button.active{color:var(--gold);background:rgba(231,200,140,.09)}
 
   /* Capture */
-  .quickRow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
-  .quickBtn{background:var(--card);border:1px solid var(--border);border-radius:12px;
-    color:var(--text);padding:12px 10px;font-size:13.5px;cursor:pointer;text-align:left}
-  .quickBtn .q{font-size:16px;margin-right:6px}
-  #memText{width:100%;min-height:100px;background:var(--card);border:1px solid var(--border);
-    border-radius:14px;color:var(--text);font-size:17px;padding:14px;resize:vertical;outline:none}
-  #memText:focus{border-color:var(--accent)}
+  .quickRow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+  .quickBtn{display:flex;align-items:center;gap:10px;background:var(--card);
+    border:1px solid var(--border);border-radius:15px;color:var(--text);padding:13px 14px;
+    font-size:13.5px;font-weight:500;cursor:pointer;text-align:left;transition:all .2s}
+  .quickBtn:hover{border-color:rgba(231,200,140,.35);background:var(--card2)}
+  .quickBtn .q{display:flex;align-items:center;justify-content:center;width:32px;height:32px;
+    border-radius:10px;background:rgba(231,200,140,.09);color:var(--gold);flex:0 0 auto}
+  .quickBtn small{display:block;color:var(--muted);font-weight:400;font-size:11px;margin-top:1px}
+  #memText{width:100%;min-height:104px;background:var(--card);border:1px solid var(--border);
+    border-radius:16px;color:var(--text);font-size:16.5px;line-height:1.5;padding:15px 16px;
+    resize:vertical;outline:none;transition:border-color .2s, box-shadow .2s}
+  #memText::placeholder{color:#5d6580}
+  #memText:focus{border-color:var(--goldSoft);box-shadow:0 0 0 4px rgba(231,200,140,.08)}
   .capRow{display:flex;gap:10px;margin-top:12px}
-  .capBtn{flex:1;background:var(--card);border:1px solid var(--border);border-radius:14px;
-    color:var(--text);padding:12px 6px;font-size:14px;cursor:pointer;display:flex;
-    flex-direction:column;align-items:center;gap:4px}
-  .capBtn .ico{font-size:22px}
-  .capBtn.recording{border-color:var(--danger);color:var(--danger);animation:pulse 1.2s infinite}
+  .capBtn{flex:1;display:flex;align-items:center;justify-content:center;gap:9px;
+    background:var(--card);border:1px solid var(--border);border-radius:14px;
+    color:var(--text);padding:13px 6px;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s}
+  .capBtn:hover{border-color:var(--border2)}
+  .capBtn small{color:var(--muted);font-weight:400;font-size:11px}
+  .capBtn.recording{border-color:rgba(243,129,129,.6);color:var(--danger);animation:pulse 1.2s infinite}
   @keyframes pulse{50%{opacity:.55}}
   #photoPreview{margin-top:12px;position:relative}
-  #photoPreview img{width:100%;border-radius:14px;max-height:280px;object-fit:cover}
-  #removePhoto{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.65);border:none;
-    color:#fff;border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer}
-  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-  .chip{background:var(--card);border:1px solid var(--border);border-radius:999px;
-    padding:7px 13px;font-size:13px;color:var(--muted);cursor:pointer}
-  .chip.on{border-color:var(--accent);color:var(--text);background:rgba(226,193,136,.13)}
+  #photoPreview img{width:100%;border-radius:16px;max-height:280px;object-fit:cover}
+  #removePhoto{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.6);border:none;
+    backdrop-filter:blur(6px);color:#fff;border-radius:50%;width:32px;height:32px;font-size:15px;cursor:pointer}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .chip{background:transparent;border:1px solid var(--border);border-radius:999px;
+    padding:7px 14px;font-size:12.5px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .18s}
+  .chip:hover{border-color:var(--border2);color:var(--text)}
+  .chip.on{border-color:rgba(231,200,140,.5);color:var(--text);background:rgba(231,200,140,.08)}
   #whenWrap{margin-top:12px}
-  #whenInput{color-scheme:dark}
-  #saveBtn{margin-top:16px}
+  #whenInput{color-scheme:dark;margin-bottom:0}
+  #saveBtn{margin-top:18px}
 
   /* Search */
   .searchRow{display:flex;gap:8px}
   #searchInput{flex:1;margin-bottom:0}
-  #micBtn{background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:12px;
-    font-size:18px;cursor:pointer;padding:0 14px}
-  #micBtn.recording{border-color:var(--danger);animation:pulse 1.2s infinite}
+  .sq{display:flex;align-items:center;justify-content:center;background:var(--card);
+    border:1px solid var(--border);color:var(--text);border-radius:14px;padding:0 15px;
+    cursor:pointer;transition:all .2s}
+  .sq:hover{border-color:var(--border2)}
+  .sq.primary{background:linear-gradient(115deg,#e7c88c,#f0e0bd 45%,#c9d3ea);color:var(--ink);border:none}
+  .sq.recording{border-color:rgba(243,129,129,.6);color:var(--danger);animation:pulse 1.2s infinite}
   .hint{color:var(--muted);font-size:13px;margin:10px 2px}
-  .dateNote{color:var(--accent);font-size:13px;margin:8px 2px}
-  .recentRow{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .dateNote{color:var(--gold);font-size:13px;margin:10px 2px}
+  .recentRow{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
 
   /* Cards */
-  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;
-    padding:14px 16px;margin-bottom:12px}
-  .card.pinnedCard{border-color:rgba(226,193,136,.5)}
-  .card .content{font-size:16px;line-height:1.45;white-space:pre-wrap;word-break:break-word}
-  .card .ocr{font-size:13px;color:var(--muted);margin-top:8px;white-space:pre-wrap;
-    max-height:62px;overflow:hidden;border-left:2px solid var(--border);padding-left:8px}
-  .card img.mem{width:100%;border-radius:12px;margin-top:10px;max-height:300px;object-fit:cover}
-  .meta{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:10px;color:var(--muted);font-size:13px;align-items:center}
-  .catTag{background:rgba(226,193,136,.15);color:#e8cf9f;border-radius:8px;padding:2px 8px;font-size:12px}
-  .cardActions{display:flex;gap:12px;margin-top:10px;flex-wrap:wrap}
-  .cardActions button{background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;padding:4px 0}
-  .cardActions button:hover{color:var(--text)}
-  .cardActions .actPin.pinned{color:var(--accent)}
-  .dayHead{color:var(--muted);font-size:13px;font-weight:600;text-transform:uppercase;
-    letter-spacing:.5px;margin:20px 2px 10px}
-  .empty{color:var(--muted);text-align:center;padding:36px 20px;font-size:15px;line-height:1.6}
+  .card{background:linear-gradient(165deg,rgba(255,255,255,.05),rgba(255,255,255,.02));
+    border:1px solid var(--border);border-radius:18px;padding:16px 18px;margin-bottom:12px;
+    box-shadow:0 12px 34px rgba(0,0,0,.3);transition:border-color .2s}
+  .card:hover{border-color:var(--border2)}
+  .card.pinnedCard{border-color:rgba(231,200,140,.42)}
+  .card .content{font-size:15.5px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
+  .card .ocr{font-size:12.5px;color:var(--muted);margin-top:9px;white-space:pre-wrap;
+    max-height:60px;overflow:hidden;border-left:2px solid rgba(231,200,140,.3);padding-left:10px}
+  .card img.mem{width:100%;border-radius:13px;margin-top:11px;max-height:300px;object-fit:cover}
+  .meta{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:11px;color:var(--muted);
+    font-size:12.5px;align-items:center}
+  .catTag{background:rgba(231,200,140,.1);color:#e5cd9c;border:1px solid rgba(231,200,140,.18);
+    border-radius:8px;padding:2px 9px;font-size:11.5px;font-weight:500}
+  .cardActions{display:flex;gap:4px;margin-top:12px;flex-wrap:wrap;
+    border-top:1px solid rgba(255,255,255,.05);padding-top:10px}
+  .cardActions button{display:inline-flex;align-items:center;gap:6px;background:none;border:none;
+    color:var(--muted);font-size:12.5px;font-weight:500;cursor:pointer;padding:6px 10px;
+    border-radius:9px;transition:all .18s}
+  .cardActions button:hover{color:var(--text);background:rgba(255,255,255,.05)}
+  .cardActions button svg.i{width:15px;height:15px}
+  .cardActions .actPin.pinned{color:var(--gold)}
+  .cardActions .actDel:hover{color:var(--danger)}
+  .dayHead{color:var(--muted);font-size:11px;font-weight:600;text-transform:uppercase;
+    letter-spacing:.18em;margin:24px 2px 12px}
+  .empty{color:var(--muted);text-align:center;padding:40px 20px;font-size:14.5px;line-height:1.7}
 
   /* Timeline extras */
-  .viewToggle{display:flex;gap:8px;margin-bottom:10px}
-  .filterRow{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .viewToggle{display:flex;gap:8px;margin-bottom:12px}
+  .filterRow{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none}
   .filterRow::-webkit-scrollbar{display:none}
   .filterRow .chip{flex:0 0 auto}
-  #mapWrap{height:430px;border-radius:16px;overflow:hidden;border:1px solid var(--border);margin-bottom:12px;background:var(--card)}
+  #mapWrap{height:440px;border-radius:18px;overflow:hidden;border:1px solid var(--border);
+    margin-bottom:12px;background:var(--card);box-shadow:0 12px 34px rgba(0,0,0,.3)}
 
   /* Reminders */
-  .rem{display:flex;align-items:flex-start;gap:12px}
-  .rem input[type=checkbox]{width:22px;height:22px;margin-top:2px;accent-color:var(--accent)}
-  .rem .rTitle{font-size:15px}
-  .rem .rDue{font-size:13px;color:var(--muted);margin-top:2px}
+  .rem{display:flex;align-items:flex-start;gap:13px}
+  .rem input[type=checkbox]{width:21px;height:21px;margin-top:2px;accent-color:var(--gold)}
+  .rem .rTitle{font-size:14.5px}
+  .rem .rDue{font-size:12.5px;color:var(--muted);margin-top:3px}
   .rem.overdue .rDue{color:var(--danger)}
   .rem.done .rTitle{text-decoration:line-through;color:var(--muted)}
-  .rem .rDel{margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px}
+  .rem .rDel{margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;padding:4px}
+  .rem .rDel:hover{color:var(--danger)}
 
   /* Modal */
-  #modalBack{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:20;
-    display:flex;align-items:flex-end;justify-content:center}
-  #modal{background:var(--card);border-top:1px solid var(--border);width:100%;max-width:640px;
-    border-radius:20px 20px 0 0;padding:22px 20px calc(22px + env(safe-area-inset-bottom))}
-  #modal h3{margin:0 0 14px;font-size:17px}
+  #modalBack{position:fixed;inset:0;background:rgba(4,6,12,.7);backdrop-filter:blur(6px);
+    z-index:20;display:flex;align-items:flex-end;justify-content:center}
+  #modal{background:#10152a;border:1px solid var(--border2);border-bottom:none;width:100%;max-width:620px;
+    border-radius:22px 22px 0 0;padding:24px 22px calc(24px + env(safe-area-inset-bottom))}
+  #modal h3{margin:0 0 16px;font-family:'Jost',sans-serif;font-weight:400;font-size:19px}
 
   /* Toast + offline */
-  #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom));
-    background:#222941;color:var(--text);padding:11px 18px;border-radius:12px;font-size:14px;
-    z-index:30;box-shadow:0 6px 24px rgba(0,0,0,.4);transition:opacity .3s;opacity:0;pointer-events:none;
-    max-width:88vw;text-align:center}
+  #toast{position:fixed;left:50%;transform:translateX(-50%);
+    bottom:calc(110px + env(safe-area-inset-bottom));
+    background:rgba(22,28,48,.92);backdrop-filter:blur(14px);border:1px solid var(--border2);
+    color:var(--text);padding:11px 20px;border-radius:13px;font-size:13.5px;font-weight:500;
+    z-index:30;box-shadow:0 14px 40px rgba(0,0,0,.5);transition:opacity .3s;opacity:0;
+    pointer-events:none;max-width:88vw;text-align:center}
   #toast.show{opacity:1}
-  #offlineBadge{position:fixed;top:calc(env(safe-area-inset-top) + 10px);left:50%;transform:translateX(-50%);
-    background:#4a2330;color:#ffb4b4;font-size:12px;padding:5px 14px;border-radius:999px;z-index:40}
-  .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(127,132,156,.35);
+  #offlineBadge{position:fixed;top:calc(env(safe-area-inset-top) + 10px);left:50%;
+    transform:translateX(-50%);background:rgba(74,35,48,.9);backdrop-filter:blur(10px);
+    border:1px solid rgba(243,129,129,.3);color:#ffb4b4;font-size:12px;font-weight:500;
+    padding:6px 15px;border-radius:999px;z-index:40}
+  .spinner{display:inline-block;width:15px;height:15px;border:2px solid rgba(127,132,156,.35);
     border-top-color:currentColor;border-radius:50%;animation:spin .8s linear infinite;vertical-align:-3px}
   @keyframes spin{to{transform:rotate(360deg)}}
 </style>
@@ -162,7 +222,7 @@
 
 <div id="authView">
   <div class="authCard">
-    <img src="logo.jpg" alt="SecondMind — Live fully. We’ll remember." style="width:100%;border-radius:14px;margin-bottom:20px;display:block"/>
+    <img class="hero" src="logo.jpg" alt="SecondMind — Live fully. We’ll remember."/>
     <input class="field" id="email" type="email" placeholder="Email" autocomplete="email">
     <input class="field" id="password" type="password" placeholder="Password" autocomplete="current-password">
     <button class="btn" id="authBtn">Sign in</button>
@@ -173,9 +233,9 @@
 
 <div id="appView" class="hidden">
   <header class="top">
-    <h1 class="logo" style="display:flex;align-items:center;gap:9px"><img src="mark.png" alt="" style="height:28px;border-radius:7px"/>SecondMind</h1>
+    <div class="brand"><img src="mark.png" alt=""/><span class="wordmark">SecondMind</span></div>
     <div class="hdrBtns">
-      <button class="iconBtn" id="exportBtn" title="Export my data">⬇</button>
+      <button class="iconBtn" id="exportBtn" title="Export my data"><svg class="i" viewBox="0 0 24 24"><path d="M12 3v12M6 11l6 6 6-6M4 21h16"/></svg></button>
       <button class="iconBtn" id="signOutBtn">Sign out</button>
     </div>
   </header>
@@ -183,17 +243,17 @@
 
     <!-- CAPTURE -->
     <section id="tab-capture">
-      <h2 class="sect">Remember something</h2>
+      <h2 class="sect">What should I remember?</h2>
       <div class="quickRow">
-        <button class="quickBtn" data-quick="park"><span class="q">🅿️</span>Parked here <span style="color:var(--muted);font-size:11.5px">1-tap save</span></button>
-        <button class="quickBtn" data-quick="left"><span class="q">🔑</span>I left ___ at ___</button>
-        <button class="quickBtn" data-quick="meds"><span class="q">💊</span>Took medication</button>
-        <button class="quickBtn" data-quick="idea"><span class="q">💭</span>Idea…</button>
+        <button class="quickBtn" data-quick="park"><span class="q"><svg class="i" viewBox="0 0 24 24"><path d="M12 21s-7-5.1-7-11a7 7 0 0 1 14 0c0 5.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></span><span>Parked here<small>saves instantly with location</small></span></button>
+        <button class="quickBtn" data-quick="left"><span class="q"><svg class="i" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3m-4 1 3 3m-6 0 2 2"/></svg></span><span>I left ___ at ___<small>never lose track again</small></span></button>
+        <button class="quickBtn" data-quick="meds"><span class="q"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="9" width="18" height="7" rx="3.5" transform="rotate(-40 12 12.5)"/><path d="m9 8.5 6.5 5.5"/></svg></span><span>Took medication<small>time-stamped for you</small></span></button>
+        <button class="quickBtn" data-quick="idea"><span class="q"><svg class="i" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.7.5 1 1.3 1 2.1h5c0-.8.3-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg></span><span>Idea…<small>catch it before it fades</small></span></button>
       </div>
-      <textarea id="memText" placeholder="e.g. Parked in lot C, row 14 &#10;Sarah recommended Nari in Japantown &#10;Wifi password is on the photo"></textarea>
+      <textarea id="memText" placeholder="Parked in lot C, row 14…&#10;Sarah recommended Nari in Japantown…&#10;The wifi password is on the photo…"></textarea>
       <div class="capRow">
-        <button class="capBtn" id="voiceBtn"><span class="ico">🎤</span><span id="voiceLbl">Speak</span></button>
-        <button class="capBtn" id="photoBtn"><span class="ico">📷</span><span>Photo <span style="color:var(--muted);font-size:11px">text auto-read</span></span></button>
+        <button class="capBtn" id="voiceBtn"><svg class="i" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span id="voiceLbl">Speak</span></button>
+        <button class="capBtn" id="photoBtn"><svg class="i" viewBox="0 0 24 24"><path d="M7 7l2-3h6l2 3h3a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h3z"/><circle cx="12" cy="14" r="4"/></svg><span>Photo <small>text auto-read</small></span></button>
       </div>
       <input type="file" id="photoInput" accept="image/*" class="hidden">
       <div id="photoPreview" class="hidden"><img id="previewImg" alt="preview"><button id="removePhoto">✕</button></div>
@@ -208,7 +268,7 @@
       <button class="btn" id="saveBtn">Save memory</button>
 
       <div id="otdWrap" class="hidden">
-        <div class="subHead">🕰 On this day</div>
+        <div class="eyebrow">On this day</div>
         <div id="otdList"></div>
       </div>
     </section>
@@ -218,8 +278,8 @@
       <h2 class="sect">Ask your memory</h2>
       <div class="searchRow">
         <input class="field" id="searchInput" type="search" placeholder="Where did I park last month?">
-        <button id="micBtn" title="Voice search">🎤</button>
-        <button class="btn" id="searchBtn" style="width:auto;padding:0 18px">🔎</button>
+        <button class="sq" id="micBtn" title="Voice search"><svg class="i" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+        <button class="sq primary" id="searchBtn"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4.5 4.5"/></svg></button>
       </div>
       <div class="recentRow" id="askChips"></div>
       <p class="dateNote hidden" id="dateNote"></p>
@@ -228,17 +288,17 @@
 
     <!-- TIMELINE -->
     <section id="tab-timeline" class="hidden">
-      <h2 class="sect">Timeline</h2>
+      <h2 class="sect">Your timeline</h2>
       <div class="viewToggle">
-        <button class="iconBtn on" id="listViewBtn">☰ List</button>
-        <button class="iconBtn" id="mapViewBtn">🗺 Map</button>
+        <button class="iconBtn on" id="listViewBtn"><svg class="i" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>List</button>
+        <button class="iconBtn" id="mapViewBtn"><svg class="i" viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/></svg>Map</button>
       </div>
       <div class="filterRow" id="filterRow"></div>
       <div id="mapWrap" class="hidden"></div>
       <div id="pinnedWrap" class="hidden">
-        <div class="subHead">⭐ Pinned</div>
+        <div class="eyebrow">Pinned</div>
         <div id="pinnedList"></div>
-        <div class="subHead">Everything</div>
+        <div class="eyebrow">Everything</div>
       </div>
       <div id="timelineList"></div>
       <button class="btnGhost hidden" id="moreBtn">Load more</button>
@@ -247,23 +307,23 @@
     <!-- REMINDERS -->
     <section id="tab-reminders" class="hidden">
       <h2 class="sect">Reminders</h2>
-      <p class="hint">Create one from any memory with “⏰ Remind me”.</p>
+      <p class="hint">Create one from any memory with “Remind me”.</p>
       <div id="remindersList"></div>
     </section>
 
   </main>
 
-  <nav class="tabs">
-    <button data-tab="capture" class="active"><span class="ico">➕</span>Capture</button>
-    <button data-tab="ask"><span class="ico">🔎</span>Ask</button>
-    <button data-tab="timeline"><span class="ico">📅</span>Timeline</button>
-    <button data-tab="reminders"><span class="ico">⏰</span>Alerts</button>
+  <nav class="dock">
+    <button data-tab="capture" class="active"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Capture</button>
+    <button data-tab="ask"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4.5 4.5"/></svg>Ask</button>
+    <button data-tab="timeline"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 3v4M16 3v4"/></svg>Timeline</button>
+    <button data-tab="reminders"><svg class="i" viewBox="0 0 24 24"><path d="M18 9a6 6 0 1 0-12 0c0 6.2-2.5 7.5-2.5 7.5h17S18 15.2 18 9zM10.3 20.5a2 2 0 0 0 3.4 0"/></svg>Alerts</button>
   </nav>
 </div>
 
 <div id="modalBack" class="hidden">
   <div id="modal">
-    <h3>⏰ Remind me</h3>
+    <h3>Remind me</h3>
     <input class="field" id="remTitle" placeholder="Reminder title">
     <input class="field" id="remDue" type="datetime-local" style="color-scheme:dark">
     <button class="btn" id="remSave">Save reminder</button>
@@ -272,7 +332,7 @@
 </div>
 
 <div id="toast"></div>
-<div id="offlineBadge" class="hidden">📴 Offline — captures will sync later</div>
+<div id="offlineBadge" class="hidden">Offline — captures will sync later</div>
 
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -288,6 +348,14 @@ function toast(msg){ toastEl.textContent = msg; toastEl.classList.add('show');
   clearTimeout(toastTimer); toastTimer = setTimeout(()=>toastEl.classList.remove('show'), 3200); }
 
 if ('serviceWorker' in navigator) { try { navigator.serviceWorker.register('sw.js'); } catch {} }
+
+/* icons for dynamic cards */
+const I = {
+  pin: '<svg class="i" viewBox="0 0 24 24"><path d="m12 3 2.7 5.6 6.3.9-4.5 4.4 1 6.1L12 17.1 6.5 20l1-6.1L3 9.5l6.3-.9L12 3z"/></svg>',
+  bell: '<svg class="i" viewBox="0 0 24 24"><path d="M18 9a6 6 0 1 0-12 0c0 6.2-2.5 7.5-2.5 7.5h17S18 15.2 18 9zM10.3 20.5a2 2 0 0 0 3.4 0"/></svg>',
+  map: '<svg class="i" viewBox="0 0 24 24"><path d="M12 21s-7-5.1-7-11a7 7 0 0 1 14 0c0 5.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',
+  trash: '<svg class="i" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>',
+};
 
 /* ---------- categories ---------- */
 const CATS = {
@@ -365,12 +433,12 @@ async function flushQueue(){
     q.shift(); ok++;
   }
   setQueue(q);
-  if (ok) { toast(`☁️ Synced ${ok} offline ${ok===1?'memory':'memories'}`); loadTimeline(true); }
+  if (ok) { toast(`Synced ${ok} offline ${ok===1?'memory':'memories'}`); loadTimeline(true); }
 }
 
 /* ---------- tabs ---------- */
-document.querySelectorAll('nav.tabs button').forEach(b => b.onclick = () => {
-  document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.toggle('active', x===b));
+document.querySelectorAll('nav.dock button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('nav.dock button').forEach(x=>x.classList.toggle('active', x===b));
   ['capture','ask','timeline','reminders'].forEach(t =>
     $('tab-'+t).classList.toggle('hidden', t !== b.dataset.tab));
   if (b.dataset.tab==='timeline') loadTimeline(true);
@@ -511,7 +579,7 @@ async function runOcr(blob, memId){
     const text = (data.text || '').trim().slice(0, 15000);
     if (text.length > 3) {
       await sb.from('memories').update({ ocr_text: text }).eq('id', memId);
-      toast('📖 Photo text saved — it’s searchable now');
+      toast('Photo text saved — it’s searchable now');
     }
   } catch {}
 }
@@ -537,7 +605,7 @@ async function saveMemory(quick){
     if (!navigator.onLine && !photoFile) {
       const q = getQueue(); q.push(row); setQueue(q);
       if (!quick) resetCapture();
-      toast('📴 Saved offline — will sync automatically');
+      toast('Saved offline — will sync automatically');
       return;
     }
     const { data: { user } } = await sb.auth.getUser();
@@ -551,7 +619,7 @@ async function saveMemory(quick){
     const { data: inserted, error } = await sb.from('memories').insert(row).select('id').single();
     if (error) throw error;
     if (!quick) resetCapture();
-    toast(quick ? '🅿️ Parking spot remembered' : '✅ Remembered');
+    toast(quick ? 'Parking spot remembered' : 'Remembered');
     if (blobForOcr && inserted?.id) runOcr(blobForOcr, inserted.id);
   } catch(e){
     if (!navigator.onLine || (e.message||'').includes('Failed to fetch')) {
@@ -560,7 +628,7 @@ async function saveMemory(quick){
                lat: loc?.lat ?? null, lng: loc?.lng ?? null, place_label: loc?.label ?? null });
       setQueue(q);
       if (!quick) resetCapture();
-      toast('📴 Saved offline — will sync automatically');
+      toast('Saved offline — will sync automatically');
     } else toast('Could not save: ' + (e.message||e));
   } finally {
     btn.disabled = false; btn.textContent = 'Save memory';
@@ -593,8 +661,8 @@ async function loadOnThisDay(){
   for (const m of flat){
     const el = card(m);
     const tag = document.createElement('div');
-    tag.style.cssText = 'color:var(--accent);font-size:12px;margin-bottom:6px';
-    tag.textContent = '🕰 ' + m._otd;
+    tag.style.cssText = 'color:var(--gold);font-size:12px;font-weight:500;margin-bottom:7px';
+    tag.textContent = m._otd;
     el.prepend(tag);
     box.appendChild(el);
   }
@@ -650,7 +718,7 @@ function renderAskChips(){
   const items = recents.length ? recents : SAMPLES;
   for (const q of items){
     const b = document.createElement('button');
-    b.className='chip'; b.textContent = (recents.length?'↩ ':'') + q;
+    b.className='chip'; b.textContent = q;
     b.onclick = () => { $('searchInput').value = q; doSearch(); };
     box.appendChild(b);
   }
@@ -675,7 +743,7 @@ async function doSearch(){
   addRecent(raw); renderAskChips();
   const { cleaned, from, to, note } = parseDates(raw);
   $('dateNote').classList.toggle('hidden', !note);
-  if (note) $('dateNote').textContent = '🗓 filtering to ' + note;
+  if (note) $('dateNote').textContent = 'Filtering to ' + note;
   $('searchResults').innerHTML = '<p class="empty"><span class="spinner"></span></p>';
   const { data, error } = await sb.rpc('search_memories', {
     q: cleaned || raw.replace(/[?!.]/g,''),
@@ -733,7 +801,7 @@ async function loadTimeline(reset){
   const { data, error } = await qy.range(tlOffset, tlOffset+PAGE_SIZE-1);
   if (error){ toast(error.message); return; }
   if (!data.length && tlOffset===0){
-    $('timelineList').innerHTML = '<p class="empty">Nothing here yet.<br>Capture your first memory in the ➕ tab.</p>';
+    $('timelineList').innerHTML = '<p class="empty">Nothing here yet.<br>Capture your first memory in the Capture tab.</p>';
     $('moreBtn').classList.add('hidden'); return;
   }
   let lastDay = tlOffset ? ($('timelineList').dataset.lastDay || '') : '';
@@ -817,27 +885,27 @@ function card(m){
       <span class="catTag">${CATS[m.category]||'📌'} ${m.category}</span>
       <span>${when}</span>
       ${m.place_label ? `<span>📍 ${escapeHtml(m.place_label)}</span>` :
-        (m.lat!=null ? `<span>📍 <a style="color:var(--accent2)" target="_blank" href="https://maps.google.com/?q=${m.lat},${m.lng}">map</a></span>` : '')}
-      ${m.kind==='voice' ? '<span>🎤</span>' : ''}
+        (m.lat!=null ? `<span>📍 <a style="color:var(--silver)" target="_blank" href="https://maps.google.com/?q=${m.lat},${m.lng}">map</a></span>` : '')}
     </div>
     <div class="cardActions">
-      <button class="actPin ${m.pinned?'pinned':''}">${m.pinned?'★ Unpin':'⭐ Pin'}</button>
-      <button class="actRemind">⏰ Remind me</button>
-      ${m.lat!=null ? `<button class="actMap">🗺 Map</button>` : ''}
-      <button class="actDel">🗑 Delete</button>
+      <button class="actPin ${m.pinned?'pinned':''}">${I.pin}<span>${m.pinned?'Unpin':'Pin'}</span></button>
+      <button class="actRemind">${I.bell}<span>Remind me</span></button>
+      ${m.lat!=null ? `<button class="actMap">${I.map}<span>Map</span></button>` : ''}
+      <button class="actDel">${I.trash}<span>Delete</span></button>
     </div>`;
   if (m.content) el.querySelector('.content').textContent = m.content;
-  if (m.ocr_text) el.querySelector('.ocr').textContent = '📖 ' + m.ocr_text.slice(0, 200);
+  if (m.ocr_text) el.querySelector('.ocr').textContent = m.ocr_text.slice(0, 200);
   if (m.photo_path) signedUrl(m.photo_path).then(u => { if(u) el.querySelector('img.mem').src=u; });
-  el.querySelector('.actPin').onclick = async (ev) => {
+  const pinBtn = el.querySelector('.actPin');
+  pinBtn.onclick = async () => {
     const newVal = !m.pinned;
     const { error } = await sb.from('memories').update({ pinned: newVal }).eq('id', m.id);
     if (error) return toast(error.message);
     m.pinned = newVal;
-    ev.target.textContent = newVal ? '★ Unpin' : '⭐ Pin';
-    ev.target.classList.toggle('pinned', newVal);
+    pinBtn.querySelector('span').textContent = newVal ? 'Unpin' : 'Pin';
+    pinBtn.classList.toggle('pinned', newVal);
     el.classList.toggle('pinnedCard', newVal);
-    toast(newVal ? '⭐ Pinned' : 'Unpinned');
+    toast(newVal ? 'Pinned' : 'Unpinned');
     loadPinned();
   };
   el.querySelector('.actRemind').onclick = () => openReminderModal(m);
@@ -871,7 +939,7 @@ $('remSave').onclick = async () => {
   const { error } = await sb.from('reminders').insert({
     memory_id: remMemory?.id ?? null, title, due_at: new Date(due).toISOString() });
   if (error) return toast(error.message);
-  $('modalBack').classList.add('hidden'); toast('⏰ Reminder set'); loadReminders();
+  $('modalBack').classList.add('hidden'); toast('Reminder set'); loadReminders();
 };
 async function loadReminders(){
   const { data, error } = await sb.from('reminders').select('*').order('due_at');
@@ -886,8 +954,8 @@ async function loadReminders(){
     el.innerHTML = `
       <input type="checkbox" ${r.done?'checked':''}>
       <div><div class="rTitle"></div>
-      <div class="rDue">${overdue?'⚠️ ':''}${new Date(r.due_at).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</div></div>
-      <button class="rDel">🗑</button>`;
+      <div class="rDue">${overdue?'Overdue · ':''}${new Date(r.due_at).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</div></div>
+      <button class="rDel">${I.trash}</button>`;
     el.querySelector('.rTitle').textContent = r.title;
     el.querySelector('input').onchange = async e => {
       await sb.from('reminders').update({ done: e.target.checked }).eq('id', r.id); loadReminders(); };
@@ -912,7 +980,7 @@ $('exportBtn').onclick = async () => {
   a.href = URL.createObjectURL(blob);
   a.download = 'secondmind-export.json';
   a.click();
-  toast('⬇ Export downloaded — your data is yours');
+  toast('Export downloaded — your data is yours');
 };
 </script>
 </body>

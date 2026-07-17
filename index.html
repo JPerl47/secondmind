@@ -698,19 +698,40 @@ $('memText').addEventListener('input', paintCatChips);
 
 /* voice capture */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-let rec = null, recOn = false;
-if (!SR) $('voiceBtn').style.display='none';
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+const STANDALONE = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+let rec = null, recOn = false, voiceFellBack = false;
+
+function dictationFallback(target){
+  voiceFellBack = true;
+  target.focus();
+  toast('Tap the mic key on your keyboard to dictate — it types as you speak');
+}
+function voiceError(err, target){
+  recOn = false;
+  $('voiceBtn').classList.remove('recording'); $('voiceLbl').textContent='Speak';
+  if (err === 'no-speech') { toast('Didn’t catch that — try again'); return; }
+  dictationFallback(target);
+}
 $('voiceBtn').onclick = () => {
-  if (recOn){ rec.stop(); return; }
-  rec = new SR(); rec.lang='en-US'; rec.interimResults=false; rec.continuous=true;
-  rec.onresult = e => {
-    let txt='';
-    for (let i=e.resultIndex;i<e.results.length;i++) if (e.results[i].isFinal) txt += e.results[i][0].transcript;
-    if (txt){ $('memText').value = ($('memText').value+' '+txt).trim(); memKind='voice'; paintCatChips(); }
-  };
-  rec.onend = () => { recOn=false; $('voiceBtn').classList.remove('recording'); $('voiceLbl').textContent='Speak'; };
-  rec.onerror = ev => { if(ev.error==='not-allowed') toast('Microphone permission needed'); };
-  rec.start(); recOn=true; $('voiceBtn').classList.add('recording'); $('voiceLbl').textContent='Listening…';
+  if (recOn){ try { rec.stop(); } catch {} return; }
+  if (!SR || (IS_IOS && STANDALONE) || voiceFellBack) return dictationFallback($('memText'));
+  let heard = false;
+  try {
+    rec = new SR(); rec.lang = navigator.language || 'en-US';
+    rec.interimResults = false; rec.continuous = !IS_IOS;
+    rec.onresult = e => {
+      let txt='';
+      for (let i=e.resultIndex;i<e.results.length;i++) if (e.results[i].isFinal) txt += e.results[i][0].transcript;
+      if (txt){ heard = true; $('memText').value = ($('memText').value+' '+txt).trim(); memKind='voice'; paintCatChips(); }
+    };
+    rec.onend = () => {
+      recOn=false; $('voiceBtn').classList.remove('recording'); $('voiceLbl').textContent='Speak';
+      if (IS_IOS && !heard) dictationFallback($('memText'));
+    };
+    rec.onerror = ev => voiceError(ev.error, $('memText'));
+    rec.start(); recOn=true; $('voiceBtn').classList.add('recording'); $('voiceLbl').textContent='Listening…';
+  } catch { voiceError('start-failed', $('memText')); }
 };
 
 /* photo */
@@ -940,16 +961,23 @@ function renderAskChips(){
 $('searchBtn').onclick = doSearch;
 $('searchInput').addEventListener('keydown', e => { if (e.key==='Enter') doSearch(); });
 let askRec = null, askRecOn = false;
-if (!SR) $('micBtn').style.display='none';
 $('micBtn').onclick = () => {
-  if (askRecOn){ askRec.stop(); return; }
-  askRec = new SR(); askRec.lang='en-US'; askRec.interimResults=false;
-  askRec.onresult = e => {
-    const txt = e.results[0][0].transcript;
-    if (txt){ $('searchInput').value = txt; doSearch(); }
-  };
-  askRec.onend = () => { askRecOn=false; $('micBtn').classList.remove('recording'); };
-  askRec.start(); askRecOn=true; $('micBtn').classList.add('recording');
+  if (askRecOn){ try { askRec.stop(); } catch {} return; }
+  if (!SR || (IS_IOS && STANDALONE) || voiceFellBack) return dictationFallback($('searchInput'));
+  try {
+    askRec = new SR(); askRec.lang = navigator.language || 'en-US'; askRec.interimResults=false;
+    askRec.onresult = e => {
+      const txt = e.results[0][0].transcript;
+      if (txt){ $('searchInput').value = txt; doSearch(); }
+    };
+    askRec.onend = () => { askRecOn=false; $('micBtn').classList.remove('recording'); };
+    askRec.onerror = ev => {
+      askRecOn=false; $('micBtn').classList.remove('recording');
+      if (ev.error === 'no-speech') toast('Didn’t catch that — try again');
+      else dictationFallback($('searchInput'));
+    };
+    askRec.start(); askRecOn=true; $('micBtn').classList.add('recording');
+  } catch { dictationFallback($('searchInput')); }
 };
 async function doSearch(){
   const raw = $('searchInput').value.trim();

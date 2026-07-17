@@ -9,7 +9,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.png">
-<title>SecondMind — your life, searchable</title>
+<link rel="icon" type="image/png" href="icon.png">
+<title>SecondMind — Live fully. We’ll remember.</title>
 <style>
   :root{
     --bg:#0f1117; --card:#191c26; --card2:#20242f; --border:#2a2e3d;
@@ -28,7 +29,7 @@
   .authCard{width:100%;max-width:380px;background:var(--card);border:1px solid var(--border);
     border-radius:18px;padding:28px 24px}
   .logo{font-size:30px;font-weight:800;letter-spacing:-1px;text-align:center;
-    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    background:linear-gradient(100deg,#ecca8d,#f2e3c0 45%,#cdd5ea);
     -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin:0 0 4px}
   .tagline{text-align:center;color:var(--muted);font-size:14px;margin:0 0 24px}
   .field{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:12px;
@@ -138,8 +139,7 @@
 
 <div id="authView">
   <div class="authCard">
-    <h1 class="logo">SecondMind</h1>
-    <p class="tagline">Your life, searchable.</p>
+    <img src="logo.jpg" alt="SecondMind — Live fully. We’ll remember." style="width:100%;border-radius:14px;margin-bottom:20px;display:block"/>
     <input class="field" id="email" type="email" placeholder="Email" autocomplete="email">
     <input class="field" id="password" type="password" placeholder="Password" autocomplete="current-password">
     <button class="btn" id="authBtn">Sign in</button>
@@ -150,7 +150,7 @@
 
 <div id="appView" class="hidden">
   <header class="top">
-    <h1 class="logo">SecondMind</h1>
+    <h1 class="logo" style="display:flex;align-items:center;gap:9px"><img src="mark.png" alt="" style="height:28px;border-radius:7px"/>SecondMind</h1>
     <button id="signOutBtn">Sign out</button>
   </header>
   <main>

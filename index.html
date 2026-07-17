@@ -190,7 +190,10 @@
     animation:orbit 14s linear infinite}
   @keyframes orbit{to{transform:rotate(360deg)}}
   .hubCenter{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
-  .hubCenter img{width:44%;border-radius:50%;
+  .hubCenter button{pointer-events:auto;background:none;border:none;padding:0;width:44%;cursor:pointer;
+    border-radius:50%;transition:transform .18s}
+  .hubCenter button:active{transform:scale(.96)}
+  .hubCenter img{width:100%;display:block;border-radius:50%;
     box-shadow:0 0 60px rgba(231,200,140,.16), 0 0 0 1px rgba(255,255,255,.08);
     animation:breathe 6s ease-in-out infinite}
   @keyframes breathe{50%{box-shadow:0 0 95px rgba(231,200,140,.3), 0 0 0 1px rgba(231,200,140,.28)}}
@@ -329,9 +332,9 @@
   .rem .rDel:hover{color:var(--danger)}
 
   /* Modal */
-  #modalBack{position:fixed;inset:0;background:rgba(4,6,12,.72);backdrop-filter:blur(8px);
+  #modalBack,#echoBack{position:fixed;inset:0;background:rgba(4,6,12,.72);backdrop-filter:blur(8px);
     z-index:20;display:flex;align-items:flex-end;justify-content:center}
-  #modal{background:#0f142a;border:1px solid var(--border2);border-bottom:none;width:100%;max-width:620px;
+  #modal,#echoSheet{background:#0f142a;border:1px solid var(--border2);border-bottom:none;width:100%;max-width:620px;
     border-radius:24px 24px 0 0;padding:26px 24px calc(26px + env(safe-area-inset-bottom));
     animation:rise .3s ease both}
   #modal h3{margin:0 0 18px;font-family:'Cormorant Garamond',serif;font-weight:500;font-size:24px}
@@ -366,7 +369,7 @@
     </form>
     <button class="btnGhost" id="authToggle">New here? Create an account</button>
     <p class="authMsg" id="authMsg"></p>
-    <p class="verTag">SECONDMIND · BUILD 14</p>
+    <p class="verTag">SECONDMIND · BUILD 15</p>
   </div>
 </div>
 
@@ -386,7 +389,7 @@
 
       <div id="hub">
         <div class="hubRing"></div>
-        <div class="hubCenter"><img src="mark.png" alt=""/></div>
+        <div class="hubCenter"><button id="echoBtn" title="Ask SecondMind"><img src="mark.png" alt=""/></button></div>
         <button class="orb" style="--a:-90deg" data-act="write"><svg class="i" viewBox="0 0 24 24"><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1z"/><path d="m14 6 3 3"/></svg><span>Write</span></button>
         <button class="orb" style="--a:-45deg" data-act="speak"><svg class="i" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span>Speak</span></button>
         <button class="orb" style="--a:0deg" data-act="photo"><svg class="i" viewBox="0 0 24 24"><path d="M7 7l2-3h6l2 3h3a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h3z"/><circle cx="12" cy="14" r="4"/></svg><span>Photo</span></button>
@@ -473,7 +476,7 @@
       <h2 class="sect">Gentle <em>reminders</em></h2>
       <p class="hint">Create one from any memory with “Remind me”.</p>
       <div id="remindersList"></div>
-      <p class="verTag">SECONDMIND · BUILD 14</p>
+      <p class="verTag">SECONDMIND · BUILD 15</p>
     </section>
 
   </main>
@@ -484,6 +487,19 @@
     <button data-tab="timeline"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 3v4M16 3v4"/></svg>Timeline</button>
     <button data-tab="reminders"><svg class="i" viewBox="0 0 24 24"><path d="M18 9a6 6 0 1 0-12 0c0 6.2-2.5 7.5-2.5 7.5h17S18 15.2 18 9zM10.3 20.5a2 2 0 0 0 3.4 0"/></svg>Alerts</button>
   </nav>
+</div>
+
+<div id="echoBack" class="hidden">
+  <div id="echoSheet">
+    <div class="eyebrow" style="margin:0 0 10px">SecondMind</div>
+    <h3 style="font-family:'Cormorant Garamond',serif;font-weight:500;font-size:24px;margin:0 0 16px">Tell me, or <em style="background:linear-gradient(100deg,#ecca8d,#f0ddb4);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-style:italic">ask</em> me anything.</h3>
+    <div class="searchRow">
+      <input class="field" id="echoInput" type="text" placeholder="I parked on level 3… / Where did I park?">
+      <button class="sq" id="echoMic" title="Voice"><svg class="i" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+      <button class="sq primary" id="echoGo"><svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+    </div>
+    <p class="hint" style="margin:12px 2px 0">Questions get answers · thoughts get remembered · try “show map” or “find my car”</p>
+  </div>
 </div>
 
 <div id="modalBack" class="hidden">
@@ -882,6 +898,62 @@ function resetCapture(){
   closeComposer();
 }
 $('saveBtn').onclick = () => saveMemory(null);
+
+/* ---------- the echo: one AI entry to everything ---------- */
+function openEcho(){ $('echoBack').classList.remove('hidden'); setTimeout(() => $('echoInput').focus(), 60); }
+function closeEcho(){ $('echoBack').classList.add('hidden'); $('echoInput').value=''; }
+$('echoBtn').onclick = openEcho;
+$('echoBack').onclick = e => { if (e.target.id === 'echoBack') closeEcho(); };
+$('echoInput').addEventListener('keydown', e => { if (e.key === 'Enter') routeEcho(); });
+$('echoGo').onclick = routeEcho;
+$('echoMic').onclick = () => {
+  if (!SR || (IS_IOS && STANDALONE) || voiceFellBack) { $('echoInput').focus(); toast('Tap the mic key on your keyboard to dictate'); return; }
+  try {
+    const r = new SR(); r.lang = navigator.language || 'en-US'; r.interimResults = false;
+    r.onresult = e => { const t = e.results[0][0].transcript; if (t){ $('echoInput').value = t; routeEcho(); } };
+    r.onerror = () => { $('echoInput').focus(); toast('Tap the mic key on your keyboard to dictate'); };
+    r.onstart = () => $('echoMic').classList.add('recording');
+    r.onend = () => $('echoMic').classList.remove('recording');
+    r.start();
+  } catch { $('echoInput').focus(); toast('Tap the mic key on your keyboard to dictate'); }
+};
+function goTab(tab){ document.querySelector(`nav.dock button[data-tab="${tab}"]`).click(); }
+async function routeEcho(){
+  const t = $('echoInput').value.trim();
+  if (!t) return;
+  const l = t.toLowerCase().replace(/[.!]/g,'').trim();
+
+  // navigation commands
+  const navMap = {
+    'show map':'map','map':'map','memory map':'map',
+    'show timeline':'list','timeline':'list','history':'list',
+    'collections':'col','show collections':'col','library':'col',
+    'reminders':'rem','alerts':'rem','show reminders':'rem',
+  };
+  if (navMap[l] !== undefined){
+    closeEcho();
+    if (navMap[l] === 'rem') goTab('reminders');
+    else { goTab('timeline'); setView(navMap[l]); }
+    return;
+  }
+  if (l === 'find my car' || l === 'where is my car' || l === 'wheres my car'){
+    closeEcho();
+    if (carSpot) { window.open(directionsUrl(carSpot.lat, carSpot.lng, true), '_blank'); return; }
+  }
+
+  // questions → Ask; statements → remember
+  const isQuestion = /\?$/.test(t) ||
+    /^(where|what|whats|when|who|why|how|did|do|does|is|are|was|were|show me|find|search|any)/.test(l);
+  if (isQuestion){
+    closeEcho();
+    goTab('ask');
+    $('searchInput').value = t;
+    doSearch();
+  } else {
+    closeEcho();
+    await saveMemory({ content: t, category: autoCat(t) });
+  }
+}
 
 /* ---------- find my car ---------- */
 function timeAgo(iso){

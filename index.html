@@ -291,6 +291,26 @@
   #mapWrap{height:440px;border-radius:19px;overflow:hidden;border:1px solid var(--border);
     margin-bottom:13px;background:var(--card);box-shadow:0 14px 38px rgba(0,0,0,.32)}
 
+  /* Collections */
+  .colGrid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:4px}
+  .colCard{display:flex;flex-direction:column;gap:8px;text-align:left;padding:15px 16px;
+    border-radius:17px;color:var(--text);cursor:pointer;
+    background-color:transparent;border:1px solid transparent;
+    background-image:linear-gradient(165deg,rgba(255,255,255,.05),rgba(255,255,255,.018)),var(--bordGrad);
+    background-origin:border-box;background-clip:padding-box,border-box;
+    box-shadow:0 10px 28px rgba(0,0,0,.3);transition:transform .2s, filter .25s;
+    animation:rise .4s cubic-bezier(.2,.7,.3,1) both}
+  .colCard:hover{filter:brightness(1.12);transform:translateY(-1px)}
+  .colCard .cTop{display:flex;align-items:center;gap:10px}
+  .colCard .mono{display:flex;align-items:center;justify-content:center;width:34px;height:34px;
+    border-radius:50%;background:rgba(231,200,140,.1);box-shadow:inset 0 0 0 1px rgba(231,200,140,.22);
+    font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--gold)}
+  .colCard .cName{font-family:'Jost',sans-serif;font-size:11px;font-weight:500;
+    letter-spacing:.18em;text-transform:uppercase}
+  .colCard .cCount{color:var(--muted);font-size:11px;margin-top:1px}
+  .colCard .cSample{color:var(--muted);font-size:12.5px;line-height:1.45;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
   /* Reminders */
   .rem{display:flex;align-items:flex-start;gap:14px}
   .rem input[type=checkbox]{width:20px;height:20px;margin-top:2px;accent-color:var(--gold)}
@@ -420,9 +440,11 @@
       <h2 class="sect">Your life, <em>remembered</em></h2>
       <div class="viewToggle">
         <button class="iconBtn on" id="listViewBtn"><svg class="i" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>List</button>
+        <button class="iconBtn" id="colViewBtn"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></svg>Collections</button>
         <button class="iconBtn" id="mapViewBtn"><svg class="i" viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/></svg>Map</button>
       </div>
       <div class="filterRow" id="filterRow"></div>
+      <div id="colGrid" class="colGrid hidden"></div>
       <div id="mapWrap" class="hidden"></div>
       <div id="pinnedWrap" class="hidden">
         <div class="eyebrow">Pinned</div>
@@ -1040,16 +1062,46 @@ function buildFilterRow(){
   });
 }
 $('listViewBtn').onclick = () => setView('list');
+$('colViewBtn').onclick = () => setView('col');
 $('mapViewBtn').onclick = () => setView('map');
 function setView(v){
   tlView = v;
   $('listViewBtn').classList.toggle('on', v==='list');
+  $('colViewBtn').classList.toggle('on', v==='col');
   $('mapViewBtn').classList.toggle('on', v==='map');
   $('mapWrap').classList.toggle('hidden', v!=='map');
-  $('timelineList').classList.toggle('hidden', v==='map');
-  $('pinnedWrap').classList.toggle('hidden', v==='map' || !pinnedShown);
+  $('colGrid').classList.toggle('hidden', v!=='col');
+  $('filterRow').classList.toggle('hidden', v==='col');
+  $('timelineList').classList.toggle('hidden', v!=='list');
+  $('pinnedWrap').classList.toggle('hidden', v!=='list' || !pinnedShown);
   $('moreBtn').classList.add('hidden');
-  if (v==='map'){ buildFilterRow(); renderMap(); } else loadTimeline(true);
+  if (v==='map'){ buildFilterRow(); renderMap(); }
+  else if (v==='col'){ loadCollections(); }
+  else loadTimeline(true);
+}
+async function loadCollections(){
+  const box = $('colGrid');
+  box.innerHTML = '<p class="empty" style="grid-column:1/-1"><span class="spinner"></span></p>';
+  const { data, error } = await sb.rpc('category_counts');
+  if (error || !data?.length){
+    box.innerHTML = '<p class="empty" style="grid-column:1/-1">Nothing collected yet.</p>'; return;
+  }
+  box.innerHTML = '';
+  for (const c of data){
+    const el = document.createElement('button');
+    el.className = 'colCard';
+    el.innerHTML = `
+      <span class="cTop"><span class="mono"></span>
+        <span><span class="cName"></span><span class="cCount" style="display:block"></span></span></span>
+      <span class="cSample"></span>`;
+    el.querySelector('.mono').textContent = (c.category || '?')[0].toUpperCase();
+    el.querySelector('.cName').textContent = c.category;
+    el.querySelector('.cCount').textContent =
+      c.n + (c.n == 1 ? ' memory' : ' memories') + ' · ' + timeAgo(c.latest);
+    el.querySelector('.cSample').textContent = c.sample || '';
+    el.onclick = () => { tlCat = c.category; setView('list'); };
+    box.appendChild(el);
+  }
 }
 async function loadPinned(){
   const { data } = await sb.from('memories').select('*').eq('pinned', true)

@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1117">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<title>Recall — your life, searchable</title>
+<style>
+  :root{
+    --bg:#0f1117; --card:#191c26; --card2:#20242f; --border:#2a2e3d;
+    --text:#e8eaf2; --muted:#9aa0b4; --accent:#7c6cf6; --accent2:#a78bfa;
+    --danger:#f87171; --ok:#34d399;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
+  body{min-height:100vh;}
+  button{font-family:inherit}
+  .hidden{display:none !important}
+
+  /* Auth */
+  #authView{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+  .authCard{width:100%;max-width:380px;background:var(--card);border:1px solid var(--border);
+    border-radius:18px;padding:28px 24px}
+  .logo{font-size:34px;font-weight:800;letter-spacing:-1px;text-align:center;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin:0 0 4px}
+  .tagline{text-align:center;color:var(--muted);font-size:14px;margin:0 0 24px}
+  .field{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:12px;
+    color:var(--text);font-size:16px;padding:13px 14px;margin-bottom:12px;outline:none}
+  .field:focus{border-color:var(--accent)}
+  .btn{display:block;width:100%;border:none;border-radius:12px;padding:14px;font-size:16px;
+    font-weight:600;cursor:pointer;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+  .btn:disabled{opacity:.55}
+  .btnGhost{background:none;border:none;color:var(--muted);width:100%;padding:12px;font-size:14px;cursor:pointer}
+  .authMsg{font-size:14px;color:var(--muted);text-align:center;min-height:20px;margin:10px 0 0}
+  .authMsg.err{color:var(--danger)} .authMsg.ok{color:var(--ok)}
+
+  /* App shell */
+  #appView{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+  header.top{display:flex;align-items:center;justify-content:space-between;
+    padding:14px 18px 10px;position:sticky;top:0;background:rgba(15,17,23,.92);
+    backdrop-filter:blur(10px);z-index:5}
+  header.top .logo{font-size:22px;text-align:left;margin:0}
+  #signOutBtn{background:none;border:1px solid var(--border);color:var(--muted);
+    border-radius:10px;padding:6px 12px;font-size:13px;cursor:pointer}
+  main{padding:6px 16px 24px;max-width:640px;margin:0 auto}
+
+  /* Bottom nav */
+  nav.tabs{position:fixed;bottom:0;left:0;right:0;display:flex;
+    background:rgba(20,22,31,.97);border-top:1px solid var(--border);
+    padding-bottom:env(safe-area-inset-bottom);z-index:10}
+  nav.tabs button{flex:1;background:none;border:none;color:var(--muted);
+    padding:10px 0 8px;font-size:11px;cursor:pointer;display:flex;flex-direction:column;
+    align-items:center;gap:2px}
+  nav.tabs button .ico{font-size:22px;line-height:1}
+  nav.tabs button.active{color:var(--accent2)}
+
+  h2.sect{font-size:18px;margin:14px 2px 12px}
+
+  /* Capture */
+  #memText{width:100%;min-height:110px;background:var(--card);border:1px solid var(--border);
+    border-radius:14px;color:var(--text);font-size:17px;padding:14px;resize:vertical;outline:none}
+  #memText:focus{border-color:var(--accent)}
+  .capRow{display:flex;gap:10px;margin-top:12px}
+  .capBtn{flex:1;background:var(--card);border:1px solid var(--border);border-radius:14px;
+    color:var(--text);padding:14px 6px;font-size:14px;cursor:pointer;display:flex;
+    flex-direction:column;align-items:center;gap:4px}
+  .capBtn .ico{font-size:24px}
+  .capBtn.recording{border-color:var(--danger);color:var(--danger);animation:pulse 1.2s infinite}
+  @keyframes pulse{50%{opacity:.55}}
+  #photoPreview{margin-top:12px;position:relative}
+  #photoPreview img{width:100%;border-radius:14px;max-height:280px;object-fit:cover}
+  #removePhoto{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.65);border:none;
+    color:#fff;border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .chip{background:var(--card);border:1px solid var(--border);border-radius:999px;
+    padding:7px 13px;font-size:13px;color:var(--muted);cursor:pointer}
+  .chip.on{border-color:var(--accent);color:var(--text);background:rgba(124,108,246,.14)}
+  #whenWrap{margin-top:12px}
+  #whenInput{color-scheme:dark}
+  #saveBtn{margin-top:16px}
+
+  /* Search */
+  .searchRow{display:flex;gap:8px}
+  #searchInput{flex:1}
+  #searchBtn{width:auto;padding:0 20px}
+  .hint{color:var(--muted);font-size:13px;margin:10px 2px}
+  .dateNote{color:var(--accent2);font-size:13px;margin:8px 2px}
+
+  /* Cards */
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;
+    padding:14px 16px;margin-bottom:12px}
+  .card .content{font-size:16px;line-height:1.45;white-space:pre-wrap;word-break:break-word}
+  .card img.mem{width:100%;border-radius:12px;margin-top:10px;max-height:300px;object-fit:cover}
+  .meta{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:10px;color:var(--muted);font-size:13px;align-items:center}
+  .catTag{background:rgba(124,108,246,.15);color:var(--accent2);border-radius:8px;padding:2px 8px;font-size:12px}
+  .cardActions{display:flex;gap:14px;margin-top:10px}
+  .cardActions button{background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;padding:4px 0}
+  .cardActions button:hover{color:var(--text)}
+  .dayHead{color:var(--muted);font-size:13px;font-weight:600;text-transform:uppercase;
+    letter-spacing:.5px;margin:20px 2px 10px}
+  .empty{color:var(--muted);text-align:center;padding:40px 20px;font-size:15px;line-height:1.6}
+
+  /* Reminders */
+  .rem{display:flex;align-items:flex-start;gap:12px}
+  .rem input[type=checkbox]{width:22px;height:22px;margin-top:2px;accent-color:var(--accent)}
+  .rem .rTitle{font-size:15px}
+  .rem .rDue{font-size:13px;color:var(--muted);margin-top:2px}
+  .rem.overdue .rDue{color:var(--danger)}
+  .rem.done .rTitle{text-decoration:line-through;color:var(--muted)}
+  .rem .rDel{margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px}
+
+  /* Modal */
+  #modalBack{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:20;
+    display:flex;align-items:flex-end;justify-content:center}
+  #modal{background:var(--card);border-top:1px solid var(--border);width:100%;max-width:640px;
+    border-radius:20px 20px 0 0;padding:22px 20px calc(22px + env(safe-area-inset-bottom))}
+  #modal h3{margin:0 0 14px;font-size:17px}
+
+  /* Toast */
+  #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom));
+    background:#2b2f3e;color:var(--text);padding:11px 18px;border-radius:12px;font-size:14px;
+    z-index:30;box-shadow:0 6px 24px rgba(0,0,0,.4);transition:opacity .3s;opacity:0;pointer-events:none;
+    max-width:88vw;text-align:center}
+  #toast.show{opacity:1}
+  .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);
+    border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;vertical-align:-3px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div id="authView">
+  <div class="authCard">
+    <h1 class="logo">Recall</h1>
+    <p class="tagline">Your life, searchable.</p>
+    <input class="field" id="email" type="email" placeholder="Email" autocomplete="email">
+    <input class="field" id="password" type="password" placeholder="Password" autocomplete="current-password">
+    <button class="btn" id="authBtn">Sign in</button>
+    <button class="btnGhost" id="authToggle">New here? Create an account</button>
+    <p class="authMsg" id="authMsg"></p>
+  </div>
+</div>
+
+<div id="appView" class="hidden">
+  <header class="top">
+    <h1 class="logo">Recall</h1>
+    <button id="signOutBtn">Sign out</button>
+  </header>
+  <main>
+
+    <!-- CAPTURE -->
+    <section id="tab-capture">
+      <h2 class="sect">Remember something</h2>
+      <textarea id="memText" placeholder="e.g. Parked in lot C, row 14 &#10;Sarah recommended Nari in Japantown &#10;Replaced the car battery today"></textarea>
+      <div class="capRow">
+        <button class="capBtn" id="voiceBtn"><span class="ico">🎤</span><span id="voiceLbl">Speak</span></button>
+        <button class="capBtn" id="photoBtn"><span class="ico">📷</span>Photo</button>
+      </div>
+      <input type="file" id="photoInput" accept="image/*" class="hidden">
+      <div id="photoPreview" class="hidden"><img id="previewImg" alt="preview"><button id="removePhoto">✕</button></div>
+      <div class="chips" id="catChips"></div>
+      <div class="chips">
+        <button class="chip on" id="locChip">📍 locating…</button>
+        <button class="chip" id="whenChip">🕒 now</button>
+      </div>
+      <div id="whenWrap" class="hidden">
+        <input class="field" id="whenInput" type="datetime-local">
+      </div>
+      <button class="btn" id="saveBtn">Save memory</button>
+    </section>
+
+    <!-- ASK -->
+    <section id="tab-ask" class="hidden">
+      <h2 class="sect">Ask your memory</h2>
+      <div class="searchRow">
+        <input class="field" id="searchInput" type="search" placeholder="Where did I park last month?">
+        <button class="btn" id="searchBtn">🔎</button>
+      </div>
+      <p class="hint">Try: “restaurant Sarah recommended” · “car battery” · “parking in June”</p>
+      <p class="dateNote hidden" id="dateNote"></p>
+      <div id="searchResults"></div>
+    </section>
+
+    <!-- TIMELINE -->
+    <section id="tab-timeline" class="hidden">
+      <h2 class="sect">Timeline</h2>
+      <div id="timelineList"></div>
+      <button class="btnGhost hidden" id="moreBtn">Load more</button>
+    </section>
+
+    <!-- REMINDERS -->
+    <section id="tab-reminders" class="hidden">
+      <h2 class="sect">Reminders</h2>
+      <p class="hint">Create one from any memory with “⏰ Remind me”.</p>
+      <div id="remindersList"></div>
+    </section>
+
+  </main>
+
+  <nav class="tabs">
+    <button data-tab="capture" class="active"><span class="ico">➕</span>Capture</button>
+    <button data-tab="ask"><span class="ico">🔎</span>Ask</button>
+    <button data-tab="timeline"><span class="ico">📅</span>Timeline</button>
+    <button data-tab="reminders"><span class="ico">⏰</span>Alerts</button>
+  </nav>
+</div>
+
+<div id="modalBack" class="hidden">
+  <div id="modal">
+    <h3>⏰ Remind me</h3>
+    <input class="field" id="remTitle" placeholder="Reminder title">
+    <input class="field" id="remDue" type="datetime-local" style="color-scheme:dark">
+    <button class="btn" id="remSave">Save reminder</button>
+    <button class="btnGhost" id="remCancel">Cancel</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const SUPABASE_URL = 'https://rjcmidmbsjorypyoruea.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_6xSiAZTCyM9m7J2JV5Kbdg_gbLeGjE9';
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const $ = id => document.getElementById(id);
+const toastEl = $('toast');
+let toastTimer;
+function toast(msg){ toastEl.textContent = msg; toastEl.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>toastEl.classList.remove('show'), 3200); }
+
+/* ---------- categories ---------- */
+const CATS = {
+  parking:'🅿️', food:'🍽️', recommendation:'💡', purchase:'🧾', maintenance:'🔧',
+  health:'💊', travel:'✈️', people:'👥', home:'🏠', idea:'💭', other:'📌'
+};
+const CAT_WORDS = [
+  ['parking',['parked','parking','garage','lot ',' lot','level ','row ','spot','space ']],
+  ['maintenance',['battery','oil change','tire','filter','replaced','replace','repair','fixed','service','maintenance','furnace','hvac','leak','plumber']],
+  ['recommendation',['recommend','suggested','suggest','check out','should try','worth trying','must see']],
+  ['food',['restaurant','cafe','café','coffee','ate ','dinner','lunch','brunch','pizza','sushi','taco','ramen','bakery','food']],
+  ['purchase',['bought','purchase','receipt','paid','ordered','order ','$','cost','price','warranty','returned']],
+  ['health',['doctor','dentist','appointment','prescription','medication','vaccine','dose','allerg','pharmacy']],
+  ['travel',['flight','hotel','airbnb','airport','gate ','trip','vacation','passport']],
+  ['people',['met ','birthday','anniversary','name is','phone number','moved to']],
+  ['home',['wifi','router','paint','model number','serial','thermostat','breaker','garage code']],
+  ['idea',['idea','maybe i should','what if','someday','todo']],
+];
+function autoCat(text){
+  const t = ' ' + (text||'').toLowerCase() + ' ';
+  for (const [cat, words] of CAT_WORDS)
+    if (words.some(w => t.includes(w))) return cat;
+  return 'other';
+}
+
+/* ---------- auth ---------- */
+let signupMode = false;
+$('authToggle').onclick = () => {
+  signupMode = !signupMode;
+  $('authBtn').textContent = signupMode ? 'Create account' : 'Sign in';
+  $('authToggle').textContent = signupMode ? 'Have an account? Sign in' : 'New here? Create an account';
+  setAuthMsg('');
+};
+function setAuthMsg(m, cls){ const el=$('authMsg'); el.textContent=m; el.className='authMsg '+(cls||''); }
+$('authBtn').onclick = async () => {
+  const email = $('email').value.trim(), password = $('password').value;
+  if (!email || !password) return setAuthMsg('Enter email and password.', 'err');
+  $('authBtn').disabled = true;
+  try {
+    if (signupMode) {
+      const { data, error } = await sb.auth.signUp({ email, password });
+      if (error) throw error;
+      if (data.session) { /* auto-confirmed */ }
+      else setAuthMsg('Almost there — check your email and click the confirmation link, then sign in here.', 'ok');
+    } else {
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+    }
+  } catch(e){ setAuthMsg(e.message || 'Something went wrong.', 'err'); }
+  $('authBtn').disabled = false;
+};
+$('signOutBtn').onclick = () => sb.auth.signOut();
+
+sb.auth.onAuthStateChange((_ev, session) => {
+  const authed = !!session;
+  $('authView').classList.toggle('hidden', authed);
+  $('appView').classList.toggle('hidden', !authed);
+  if (authed) { initCapture(); loadTimeline(true); loadReminders(); }
+});
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('nav.tabs button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.toggle('active', x===b));
+  ['capture','ask','timeline','reminders'].forEach(t =>
+    $('tab-'+t).classList.toggle('hidden', t !== b.dataset.tab));
+  if (b.dataset.tab==='timeline') loadTimeline(true);
+  if (b.dataset.tab==='reminders') loadReminders();
+  if (b.dataset.tab==='ask') $('searchInput').focus();
+});
+
+/* ---------- capture ---------- */
+let loc = null, photoFile = null, memKind = 'note', capInited = false;
+function initCapture(){
+  if (capInited) return; capInited = true;
+  buildCatChips();
+  getLocation();
+}
+function getLocation(){
+  if (!navigator.geolocation){ $('locChip').textContent='📍 unavailable'; return; }
+  navigator.geolocation.getCurrentPosition(async pos => {
+    loc = { lat: pos.coords.latitude, lng: pos.coords.longitude, label: null };
+    $('locChip').textContent = '📍 located';
+    try {
+      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${loc.lat}&lon=${loc.lng}&zoom=16`);
+      const j = await r.json();
+      const a = j.address || {};
+      loc.label = [a.amenity || a.shop || a.building, a.road, a.neighbourhood || a.suburb, a.city || a.town || a.village]
+        .filter(Boolean).slice(0,3).join(', ') || j.name || null;
+      if (loc.label) $('locChip').textContent = '📍 ' + loc.label.slice(0, 34);
+    } catch {}
+  }, () => { $('locChip').textContent='📍 off'; loc=null; }, { enableHighAccuracy:false, timeout:8000, maximumAge:120000 });
+}
+$('locChip').onclick = () => {
+  const on = $('locChip').classList.toggle('on');
+  if (!on){ $('locChip').textContent='📍 off'; loc=null; }
+  else { $('locChip').textContent='📍 locating…'; getLocation(); }
+};
+$('whenChip').onclick = () => {
+  const w = $('whenWrap'); const show = w.classList.toggle('hidden');
+  $('whenChip').classList.toggle('on', !show);
+  if (!show && !$('whenInput').value){
+    const d = new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset());
+    $('whenInput').value = d.toISOString().slice(0,16);
+  }
+};
+
+let chosenCat = null;
+function buildCatChips(){
+  const box = $('catChips'); box.innerHTML='';
+  Object.entries(CATS).forEach(([cat, emo]) => {
+    const b = document.createElement('button');
+    b.className='chip'; b.textContent = emo+' '+cat; b.dataset.cat = cat;
+    b.onclick = () => { chosenCat = (chosenCat===cat) ? null : cat; paintCatChips(); };
+    box.appendChild(b);
+  });
+  paintCatChips();
+}
+function paintCatChips(){
+  const auto = autoCat($('memText').value);
+  document.querySelectorAll('#catChips .chip').forEach(b =>
+    b.classList.toggle('on', chosenCat ? b.dataset.cat===chosenCat : b.dataset.cat===auto));
+}
+$('memText').addEventListener('input', paintCatChips);
+
+/* voice */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null, recOn = false;
+if (!SR) $('voiceBtn').style.display='none';
+$('voiceBtn').onclick = () => {
+  if (recOn){ rec.stop(); return; }
+  rec = new SR(); rec.lang='en-US'; rec.interimResults=false; rec.continuous=true;
+  rec.onresult = e => {
+    let txt='';
+    for (let i=e.resultIndex;i<e.results.length;i++) if (e.results[i].isFinal) txt += e.results[i][0].transcript;
+    if (txt){ $('memText').value = ($('memText').value+' '+txt).trim(); memKind='voice'; paintCatChips(); }
+  };
+  rec.onend = () => { recOn=false; $('voiceBtn').classList.remove('recording'); $('voiceLbl').textContent='Speak'; };
+  rec.onerror = ev => { if(ev.error==='not-allowed') toast('Microphone permission needed'); };
+  rec.start(); recOn=true; $('voiceBtn').classList.add('recording'); $('voiceLbl').textContent='Listening…';
+};
+
+/* photo */
+$('photoBtn').onclick = () => $('photoInput').click();
+$('photoInput').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  photoFile = await compressImage(f);
+  $('previewImg').src = URL.createObjectURL(photoFile);
+  $('photoPreview').classList.remove('hidden');
+  memKind = 'photo';
+};
+$('removePhoto').onclick = () => { photoFile=null; $('photoPreview').classList.add('hidden'); $('photoInput').value=''; if(memKind==='photo') memKind='note'; };
+function compressImage(file){
+  return new Promise(res => {
+    const img = new Image();
+    img.onload = () => {
+      const max = 1600, s = Math.min(1, max/Math.max(img.width,img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width*s); c.height = Math.round(img.height*s);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      c.toBlob(b => res(b || file), 'image/jpeg', .85);
+    };
+    img.onerror = () => res(file);
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+/* save */
+$('saveBtn').onclick = async () => {
+  const text = $('memText').value.trim();
+  if (!text && !photoFile) return toast('Write, speak, or add a photo first');
+  $('saveBtn').disabled = true; $('saveBtn').innerHTML = '<span class="spinner"></span> Saving…';
+  try {
+    const { data: { user } } = await sb.auth.getUser();
+    let photo_path = null;
+    if (photoFile){
+      photo_path = `${user.id}/${Date.now()}.jpg`;
+      const { error: upErr } = await sb.storage.from('photos').upload(photo_path, photoFile, { contentType:'image/jpeg' });
+      if (upErr) throw upErr;
+    }
+    const row = {
+      kind: photoFile ? 'photo' : memKind,
+      content: text || null,
+      photo_path,
+      category: chosenCat || autoCat(text),
+      lat: loc?.lat ?? null, lng: loc?.lng ?? null, place_label: loc?.label ?? null,
+    };
+    if (!$('whenWrap').classList.contains('hidden') && $('whenInput').value)
+      row.happened_at = new Date($('whenInput').value).toISOString();
+    const { error } = await sb.from('memories').insert(row);
+    if (error) throw error;
+    $('memText').value=''; $('removePhoto').onclick(); chosenCat=null; memKind='note'; paintCatChips();
+    $('whenWrap').classList.add('hidden'); $('whenChip').classList.remove('on'); $('whenInput').value='';
+    toast('✅ Remembered');
+  } catch(e){ toast('Could not save: ' + (e.message||e)); }
+  $('saveBtn').disabled = false; $('saveBtn').textContent = 'Save memory';
+};
+
+/* ---------- date parsing for search ---------- */
+const MONTHS = ['january','february','march','april','may','june','july','august','september','october','november','december'];
+function parseDates(q){
+  let s = q.toLowerCase(), from=null, to=null, note=null;
+  const now = new Date();
+  const day = d => { const x=new Date(d); x.setHours(0,0,0,0); return x; };
+  const endDay = d => { const x=new Date(d); x.setHours(23,59,59,999); return x; };
+  function take(re){ const m = s.match(re); if (m) s = s.replace(re,' '); return m; }
+  let m;
+  if (take(/\btoday\b/)) { from=day(now); to=endDay(now); note='today'; }
+  else if (take(/\byesterday\b/)) { const d=new Date(now); d.setDate(d.getDate()-1); from=day(d); to=endDay(d); note='yesterday'; }
+  else if (take(/\blast\s+week\b/)) { const d=new Date(now); d.setDate(d.getDate()-d.getDay()-7); from=day(d); const e=new Date(d); e.setDate(e.getDate()+6); to=endDay(e); note='last week'; }
+  else if (take(/\bthis\s+week\b/)) { const d=new Date(now); d.setDate(d.getDate()-d.getDay()); from=day(d); to=endDay(now); note='this week'; }
+  else if (take(/\blast\s+month\b/)) { const d=new Date(now.getFullYear(), now.getMonth()-1, 1); from=d; to=new Date(now.getFullYear(), now.getMonth(), 0, 23,59,59); note='last month'; }
+  else if (take(/\bthis\s+month\b/)) { from=new Date(now.getFullYear(), now.getMonth(), 1); to=endDay(now); note='this month'; }
+  else if (take(/\blast\s+year\b/)) { from=new Date(now.getFullYear()-1,0,1); to=new Date(now.getFullYear()-1,11,31,23,59,59); note='last year'; }
+  else if (m = take(/\b(\d+)\s+days?\s+ago\b/)) { const d=new Date(now); d.setDate(d.getDate()-(+m[1])); from=day(d); to=endDay(d); note=m[1]+' days ago'; }
+  else if (m = take(/\b(\d+)\s+weeks?\s+ago\b/)) { const d=new Date(now); d.setDate(d.getDate()-7*(+m[1])); from=day(new Date(d.getTime()-3*864e5)); to=endDay(new Date(d.getTime()+3*864e5)); note='about '+m[1]+' weeks ago'; }
+  else if (m = take(/\b(\d+)\s+months?\s+ago\b/)) { const d=new Date(now.getFullYear(), now.getMonth()-(+m[1]), 1); from=d; to=new Date(d.getFullYear(), d.getMonth()+1, 0,23,59,59); note=m[1]+' months ago'; }
+  else {
+    for (let i=0;i<12;i++){
+      const re = new RegExp('\\b(?:in\\s+)?'+MONTHS[i]+'\\b');
+      if (re.test(s)){
+        s = s.replace(re,' ');
+        let y = now.getFullYear();
+        const ym = s.match(/\b(20\d\d)\b/); if (ym){ y=+ym[1]; s=s.replace(ym[0],' '); }
+        else if (i > now.getMonth()) y--;
+        from = new Date(y,i,1); to = new Date(y,i+1,0,23,59,59); note = MONTHS[i][0].toUpperCase()+MONTHS[i].slice(1)+' '+y;
+        break;
+      }
+    }
+  }
+  s = s.replace(/\b(where|what|whats|what's|when|who|did|do|does|i|my|the|a|an|at|in|on|was|is|were|that|to|me)\b/g,' ')
+       .replace(/[?!.]/g,' ').replace(/\s+/g,' ').trim();
+  return { cleaned: s, from, to, note };
+}
+
+/* ---------- search ---------- */
+$('searchBtn').onclick = doSearch;
+$('searchInput').addEventListener('keydown', e => { if (e.key==='Enter') doSearch(); });
+async function doSearch(){
+  const raw = $('searchInput').value.trim();
+  if (!raw) return;
+  const { cleaned, from, to, note } = parseDates(raw);
+  $('dateNote').classList.toggle('hidden', !note);
+  if (note) $('dateNote').textContent = '🗓 filtering to ' + note;
+  $('searchResults').innerHTML = '<p class="empty"><span class="spinner"></span></p>';
+  const { data, error } = await sb.rpc('search_memories', {
+    q: cleaned || raw.replace(/[?!.]/g,''),
+    from_ts: from ? from.toISOString() : null,
+    to_ts: to ? to.toISOString() : null,
+  });
+  if (error){ $('searchResults').innerHTML = `<p class="empty">Search failed: ${error.message}</p>`; return; }
+  if (!data?.length){ $('searchResults').innerHTML = '<p class="empty">No memories found.<br>Try fewer words, or a different time range.</p>'; return; }
+  $('searchResults').innerHTML = '';
+  for (const mrow of data) $('searchResults').appendChild(card(mrow));
+}
+
+/* ---------- timeline ---------- */
+let tlOffset = 0; const PAGE = 40;
+async function loadTimeline(reset){
+  if (reset){ tlOffset=0; $('timelineList').innerHTML=''; }
+  const { data, error } = await sb.from('memories').select('*')
+    .order('happened_at', { ascending:false }).range(tlOffset, tlOffset+PAGE-1);
+  if (error){ toast(error.message); return; }
+  if (!data.length && tlOffset===0){
+    $('timelineList').innerHTML = '<p class="empty">Nothing here yet.<br>Capture your first memory in the ➕ tab.</p>';
+    $('moreBtn').classList.add('hidden'); return;
+  }
+  let lastDay = tlOffset ? ($('timelineList').dataset.lastDay || '') : '';
+  for (const mrow of data){
+    const d = new Date(mrow.happened_at);
+    const key = d.toDateString();
+    if (key !== lastDay){
+      const h = document.createElement('div'); h.className='dayHead';
+      h.textContent = d.toLocaleDateString(undefined, { weekday:'short', month:'long', day:'numeric', year: d.getFullYear()!==new Date().getFullYear()?'numeric':undefined });
+      $('timelineList').appendChild(h); lastDay = key;
+    }
+    $('timelineList').appendChild(card(mrow));
+  }
+  $('timelineList').dataset.lastDay = lastDay;
+  tlOffset += data.length;
+  $('moreBtn').classList.toggle('hidden', data.length < PAGE);
+}
+$('moreBtn').onclick = () => loadTimeline(false);
+
+/* ---------- memory card ---------- */
+const urlCache = new Map();
+async function signedUrl(path){
+  if (urlCache.has(path)) return urlCache.get(path);
+  const { data } = await sb.storage.from('photos').createSignedUrl(path, 3600);
+  if (data?.signedUrl) urlCache.set(path, data.signedUrl);
+  return data?.signedUrl;
+}
+function card(m){
+  const el = document.createElement('div'); el.className='card'; el.dataset.id=m.id;
+  const when = new Date(m.happened_at).toLocaleString(undefined,{ month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit' });
+  el.innerHTML = `
+    ${m.content ? `<div class="content"></div>` : ''}
+    ${m.photo_path ? `<img class="mem" alt="memory photo">` : ''}
+    <div class="meta">
+      <span class="catTag">${CATS[m.category]||'📌'} ${m.category}</span>
+      <span>${when}</span>
+      ${m.place_label ? `<span>📍 ${escapeHtml(m.place_label)}</span>` :
+        (m.lat!=null ? `<span>📍 <a style="color:var(--accent2)" target="_blank" href="https://maps.google.com/?q=${m.lat},${m.lng}">map</a></span>` : '')}
+      ${m.kind==='voice' ? '<span>🎤</span>' : ''}
+    </div>
+    <div class="cardActions">
+      <button class="actRemind">⏰ Remind me</button>
+      ${m.lat!=null ? `<button class="actMap">🗺 Map</button>` : ''}
+      <button class="actDel">🗑 Delete</button>
+    </div>`;
+  if (m.content) el.querySelector('.content').textContent = m.content;
+  if (m.photo_path) signedUrl(m.photo_path).then(u => { if(u) el.querySelector('img.mem').src=u; });
+  el.querySelector('.actRemind').onclick = () => openReminderModal(m);
+  const mapBtn = el.querySelector('.actMap');
+  if (mapBtn) mapBtn.onclick = () => window.open(`https://maps.google.com/?q=${m.lat},${m.lng}`,'_blank');
+  el.querySelector('.actDel').onclick = async () => {
+    el.style.opacity=.4;
+    const { error } = await sb.from('memories').delete().eq('id', m.id);
+    if (error){ el.style.opacity=1; return toast(error.message); }
+    if (m.photo_path) sb.storage.from('photos').remove([m.photo_path]);
+    el.remove(); toast('Deleted');
+  };
+  return el;
+}
+function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+/* ---------- reminders ---------- */
+let remMemory = null;
+function openReminderModal(m){
+  remMemory = m;
+  $('remTitle').value = (m.content||'').slice(0,80) || 'About a photo memory';
+  const d = new Date(); d.setDate(d.getDate()+1); d.setMinutes(d.getMinutes()-d.getTimezoneOffset());
+  $('remDue').value = d.toISOString().slice(0,16);
+  $('modalBack').classList.remove('hidden');
+}
+$('remCancel').onclick = () => $('modalBack').classList.add('hidden');
+$('modalBack').onclick = e => { if (e.target.id==='modalBack') $('modalBack').classList.add('hidden'); };
+$('remSave').onclick = async () => {
+  const title = $('remTitle').value.trim(); const due = $('remDue').value;
+  if (!title || !due) return toast('Add a title and a date');
+  const { error } = await sb.from('reminders').insert({
+    memory_id: remMemory?.id ?? null, title, due_at: new Date(due).toISOString() });
+  if (error) return toast(error.message);
+  $('modalBack').classList.add('hidden'); toast('⏰ Reminder set'); loadReminders();
+};
+async function loadReminders(){
+  const { data, error } = await sb.from('reminders').select('*').order('due_at');
+  if (error) return;
+  const box = $('remindersList'); box.innerHTML='';
+  if (!data.length){ box.innerHTML = '<p class="empty">No reminders yet.</p>'; return; }
+  const now = new Date();
+  for (const r of data){
+    const el = document.createElement('div');
+    const overdue = !r.done && new Date(r.due_at) < now;
+    el.className = 'card rem' + (r.done?' done':'') + (overdue?' overdue':'');
+    el.innerHTML = `
+      <input type="checkbox" ${r.done?'checked':''}>
+      <div><div class="rTitle"></div>
+      <div class="rDue">${overdue?'⚠️ ':''}${new Date(r.due_at).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</div></div>
+      <button class="rDel">🗑</button>`;
+    el.querySelector('.rTitle').textContent = r.title;
+    el.querySelector('input').onchange = async e => {
+      await sb.from('reminders').update({ done: e.target.checked }).eq('id', r.id); loadReminders(); };
+    el.querySelector('.rDel').onclick = async () => {
+      await sb.from('reminders').delete().eq('id', r.id); el.remove(); };
+    box.appendChild(el);
+  }
+}
+</script>
+</body>
+</html>

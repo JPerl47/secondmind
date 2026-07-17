@@ -221,6 +221,13 @@
   .findCar b{display:block;font-size:14px;font-weight:600;letter-spacing:.02em}
   .findCar small{display:block;color:var(--muted);font-size:11.5px;margin-top:1px}
   .findCar > svg.i:last-child{color:var(--muted)}
+  #dictHint{margin-top:12px;padding:14px 16px;border-radius:14px;font-size:13px;line-height:1.6;
+    color:var(--muted);border:1px solid rgba(231,200,140,.3);background:rgba(231,200,140,.06)}
+  #dictHint b{color:var(--text);font-weight:600;display:block;margin-bottom:2px}
+  #dictHint b:not(:first-child){display:inline;margin:0}
+  #dictHint button{display:block;margin-top:9px;background:none;border:1px solid var(--border2);
+    color:var(--text);border-radius:9px;padding:6px 14px;font-size:12px;cursor:pointer}
+  .verTag{text-align:center;color:#4a5169;font-size:11px;letter-spacing:.12em;margin:26px 0 4px}
   .composerHead{display:flex;align-items:center;justify-content:space-between;margin:4px 0 14px}
   #composer{animation:rise .35s cubic-bezier(.2,.7,.3,1) both}
 
@@ -359,6 +366,7 @@
     </form>
     <button class="btnGhost" id="authToggle">New here? Create an account</button>
     <p class="authMsg" id="authMsg"></p>
+    <p class="verTag">SECONDMIND · BUILD 14</p>
   </div>
 </div>
 
@@ -401,6 +409,11 @@
       <div class="capRow">
         <button class="capBtn" id="voiceBtn"><svg class="i" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span id="voiceLbl">Speak</span></button>
         <button class="capBtn" id="photoBtn"><svg class="i" viewBox="0 0 24 24"><path d="M7 7l2-3h6l2 3h3a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h3z"/><circle cx="12" cy="14" r="4"/></svg><span>Photo <small>text auto-read</small></span></button>
+      </div>
+      <div id="dictHint" class="hidden">
+        <b>Voice on iPhone works through your keyboard</b>
+        Tap the text box above, then tap the <b>mic key</b> at the bottom of your keyboard (next to the space bar). Speak — it types for you. If there’s no mic key: Settings → General → Keyboard → Enable Dictation.
+        <button id="dictHintClose">Got it</button>
       </div>
       <input type="file" id="photoInput" accept="image/*" class="hidden">
       <div id="photoPreview" class="hidden"><img id="previewImg" alt="preview"><button id="removePhoto">✕</button></div>
@@ -460,6 +473,7 @@
       <h2 class="sect">Gentle <em>reminders</em></h2>
       <p class="hint">Create one from any memory with “Remind me”.</p>
       <div id="remindersList"></div>
+      <p class="verTag">SECONDMIND · BUILD 14</p>
     </section>
 
   </main>
@@ -663,6 +677,7 @@ $('whenChip').onclick = () => {
 function openComposer(){ $('hub').classList.add('hidden'); $('composer').classList.remove('hidden'); }
 function closeComposer(){ $('composer').classList.add('hidden'); $('hub').classList.remove('hidden'); }
 $('composerClose').onclick = () => { closeComposer(); };
+$('dictHintClose').onclick = () => { $('dictHint').classList.add('hidden'); localStorage.setItem('sm_dicthint','0'); };
 function freshFix(){
   return new Promise(res => {
     if (!navigator.geolocation) return res(null);
@@ -726,8 +741,10 @@ let rec = null, recOn = false, voiceFellBack = false;
 
 function dictationFallback(target){
   voiceFellBack = true;
+  if (target === $('memText') && localStorage.getItem('sm_dicthint') !== '0')
+    $('dictHint').classList.remove('hidden');
   target.focus();
-  toast('Tap the mic key on your keyboard to dictate — it types as you speak');
+  toast('Tap the mic key on your keyboard to dictate');
 }
 function voiceError(err, target){
   recOn = false;

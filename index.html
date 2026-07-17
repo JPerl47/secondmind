@@ -222,6 +222,17 @@
     text-transform:uppercase;letter-spacing:.26em;margin:26px 2px 13px}
   .empty{color:var(--muted);text-align:center;padding:44px 20px;font-size:14.5px;line-height:1.75}
 
+  /* AI answer */
+  #aiAnswer{border-radius:19px;padding:19px 21px;margin:14px 0 4px;
+    border:1px solid transparent;
+    background-image:linear-gradient(168deg,rgba(231,200,140,.09),rgba(255,255,255,.02)),
+      linear-gradient(140deg,rgba(231,200,140,.6),rgba(231,200,140,.18) 45%,rgba(201,211,234,.35));
+    background-origin:border-box;background-clip:padding-box,border-box;
+    box-shadow:0 14px 38px rgba(0,0,0,.32);animation:rise .4s cubic-bezier(.2,.7,.3,1) both}
+  #aiAnswer .aiEyebrow{font-family:'Jost',sans-serif;font-size:10px;font-weight:500;
+    letter-spacing:.3em;text-transform:uppercase;color:var(--gold);margin-bottom:9px}
+  #aiAnswer .aiText{font-family:'Cormorant Garamond',serif;font-size:19.5px;line-height:1.5;color:var(--text)}
+
   /* Timeline extras */
   .viewToggle{display:flex;gap:8px;margin-bottom:13px}
   .filterRow{display:flex;gap:8px;overflow-x:auto;padding:2px 0 13px;
@@ -331,6 +342,7 @@
       </div>
       <div class="recentRow" id="askChips"></div>
       <p class="dateNote hidden" id="dateNote"></p>
+      <div id="aiAnswer" class="hidden"></div>
       <div id="searchResults"></div>
     </section>
 
@@ -673,7 +685,10 @@ async function saveMemory(quick){
     if (!quick) resetCapture();
     toast(quick ? 'Parking spot remembered' : 'Remembered');
     if (inserted?.id) sb.functions.invoke('ai', { body: { action: 'embed_memory', id: inserted.id } }).catch(()=>{});
-    if (blobForOcr && inserted?.id) runOcr(blobForOcr, inserted.id);
+    if (blobForOcr && inserted?.id) {
+      runOcr(blobForOcr, inserted.id);
+      sb.functions.invoke('ai', { body: { action: 'describe_photo', id: inserted.id } }).catch(()=>{});
+    }
   } catch(e){
     if (!navigator.onLine || (e.message||'').includes('Failed to fetch')) {
       const q = getQueue();
@@ -810,9 +825,28 @@ async function doSearch(){
   const seen = new Set(); const rows = [];
   for (const r of (kw.data || [])) if (!seen.has(r.id)) { seen.add(r.id); rows.push(r); }
   for (const r of (sem?.data?.matches || [])) if (!seen.has(r.id)) { seen.add(r.id); rows.push({ ...r, _sem: true }); }
-  if (!rows.length){ $('searchResults').innerHTML = '<p class="empty">No memories found.<br>Try fewer words, or a different time range.</p>'; return; }
-  $('searchResults').innerHTML = '';
-  for (const mrow of rows) $('searchResults').appendChild(card(mrow));
+  if (!rows.length){ $('searchResults').innerHTML = '<p class="empty">No memories found.<br>Try fewer words, or a different time range.</p>'; }
+  else {
+    $('searchResults').innerHTML = '';
+    for (const mrow of rows) $('searchResults').appendChild(card(mrow));
+  }
+  askForAnswer(raw, fromIso, toIso);
+}
+
+/* ---------- AI answer (activates when an API key is added server-side) ---------- */
+let answerSeq = 0;
+async function askForAnswer(q, fromIso, toIso){
+  const seq = ++answerSeq;
+  const box = $('aiAnswer');
+  box.classList.remove('hidden');
+  box.innerHTML = '<div class="aiEyebrow">Your memory says</div><div class="aiText"><span class="spinner"></span></div>';
+  try {
+    const r = await sb.functions.invoke('ai', { body: { action: 'answer', q, from_ts: fromIso, to_ts: toIso } });
+    if (seq !== answerSeq) return;
+    if (!r?.data?.enabled || !r?.data?.answer) { box.classList.add('hidden'); box.innerHTML=''; return; }
+    box.innerHTML = '<div class="aiEyebrow">Your memory says</div><div class="aiText"></div>';
+    box.querySelector('.aiText').textContent = r.data.answer;
+  } catch { if (seq === answerSeq) { box.classList.add('hidden'); box.innerHTML=''; } }
 }
 
 /* ---------- timeline ---------- */
@@ -939,7 +973,7 @@ function card(m){
   el.innerHTML = `
     ${m.content ? `<div class="content"></div>` : ''}
     ${m.photo_path ? `<img class="mem" alt="memory photo">` : ''}
-    ${m.ocr_text ? `<div class="ocr"></div>` : ''}
+    ${(m.ai_caption || m.ocr_text) ? `<div class="ocr"></div>` : ''}
     <div class="meta">
       <span class="catTag">${m.category}</span>
       <span>${when}</span>
@@ -954,7 +988,7 @@ function card(m){
       <button class="actDel">${I.trash}<span>Delete</span></button>
     </div>`;
   if (m.content) el.querySelector('.content').textContent = m.content;
-  if (m.ocr_text) el.querySelector('.ocr').textContent = m.ocr_text.slice(0, 200);
+  if (m.ai_caption || m.ocr_text) el.querySelector('.ocr').textContent = (m.ai_caption || m.ocr_text).slice(0, 200);
   if (m.photo_path) signedUrl(m.photo_path).then(u => { if(u) el.querySelector('img.mem').src=u; });
   const pinBtn = el.querySelector('.actPin');
   pinBtn.onclick = async () => {

@@ -1,6 +1,6 @@
 {
-  "name": "Recall",
-  "short_name": "Recall",
+  "name": "SecondMind",
+  "short_name": "SecondMind",
   "description": "Your life, searchable.",
   "start_url": ".",
   "display": "standalone",

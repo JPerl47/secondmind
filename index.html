@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0f1117">
+<meta name="theme-color" content="#0a0d18">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
@@ -13,8 +13,8 @@
 <title>SecondMind — Live fully. We’ll remember.</title>
 <style>
   :root{
-    --bg:#0f1117; --card:#191c26; --card2:#20242f; --border:#2a2e3d;
-    --text:#e8eaf2; --muted:#9aa0b4; --accent:#7c6cf6; --accent2:#a78bfa;
+    --bg:#0a0d18; --card:#131829; --card2:#1a2036; --border:#28304b;
+    --text:#e9ebf4; --muted:#98a0bb; --accent:#e2c188; --accent2:#ccd5eb;
     --danger:#f87171; --ok:#34d399;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
@@ -36,7 +36,7 @@
     color:var(--text);font-size:16px;padding:13px 14px;margin-bottom:12px;outline:none}
   .field:focus{border-color:var(--accent)}
   .btn{display:block;width:100%;border:none;border-radius:12px;padding:14px;font-size:16px;
-    font-weight:600;cursor:pointer;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+    font-weight:700;cursor:pointer;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#141a2e}
   .btn:disabled{opacity:.55}
   .btnGhost{background:none;border:none;color:var(--muted);width:100%;padding:12px;font-size:14px;cursor:pointer}
   .authMsg{font-size:14px;color:var(--muted);text-align:center;min-height:20px;margin:10px 0 0}
@@ -45,7 +45,7 @@
   /* App shell */
   #appView{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
   header.top{display:flex;align-items:center;justify-content:space-between;
-    padding:14px 18px 10px;position:sticky;top:0;background:rgba(15,17,23,.92);
+    padding:14px 18px 10px;position:sticky;top:0;background:rgba(10,13,24,.92);
     backdrop-filter:blur(10px);z-index:5}
   header.top .logo{font-size:22px;text-align:left;margin:0}
   #signOutBtn{background:none;border:1px solid var(--border);color:var(--muted);
@@ -54,13 +54,13 @@
 
   /* Bottom nav */
   nav.tabs{position:fixed;bottom:0;left:0;right:0;display:flex;
-    background:rgba(20,22,31,.97);border-top:1px solid var(--border);
+    background:rgba(12,16,29,.97);border-top:1px solid var(--border);
     padding-bottom:env(safe-area-inset-bottom);z-index:10}
   nav.tabs button{flex:1;background:none;border:none;color:var(--muted);
     padding:10px 0 8px;font-size:11px;cursor:pointer;display:flex;flex-direction:column;
     align-items:center;gap:2px}
   nav.tabs button .ico{font-size:22px;line-height:1}
-  nav.tabs button.active{color:var(--accent2)}
+  nav.tabs button.active{color:var(--accent)}
 
   h2.sect{font-size:18px;margin:14px 2px 12px}
 
@@ -82,7 +82,7 @@
   .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
   .chip{background:var(--card);border:1px solid var(--border);border-radius:999px;
     padding:7px 13px;font-size:13px;color:var(--muted);cursor:pointer}
-  .chip.on{border-color:var(--accent);color:var(--text);background:rgba(124,108,246,.14)}
+  .chip.on{border-color:var(--accent);color:var(--text);background:rgba(226,193,136,.13)}
   #whenWrap{margin-top:12px}
   #whenInput{color-scheme:dark}
   #saveBtn{margin-top:16px}
@@ -100,7 +100,7 @@
   .card .content{font-size:16px;line-height:1.45;white-space:pre-wrap;word-break:break-word}
   .card img.mem{width:100%;border-radius:12px;margin-top:10px;max-height:300px;object-fit:cover}
   .meta{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:10px;color:var(--muted);font-size:13px;align-items:center}
-  .catTag{background:rgba(124,108,246,.15);color:var(--accent2);border-radius:8px;padding:2px 8px;font-size:12px}
+  .catTag{background:rgba(226,193,136,.15);color:#e8cf9f;border-radius:8px;padding:2px 8px;font-size:12px}
   .cardActions{display:flex;gap:14px;margin-top:10px}
   .cardActions button{background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;padding:4px 0}
   .cardActions button:hover{color:var(--text)}
@@ -126,12 +126,12 @@
 
   /* Toast */
   #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom));
-    background:#2b2f3e;color:var(--text);padding:11px 18px;border-radius:12px;font-size:14px;
+    background:#222941;color:var(--text);padding:11px 18px;border-radius:12px;font-size:14px;
     z-index:30;box-shadow:0 6px 24px rgba(0,0,0,.4);transition:opacity .3s;opacity:0;pointer-events:none;
     max-width:88vw;text-align:center}
   #toast.show{opacity:1}
-  .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);
-    border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;vertical-align:-3px}
+  .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(127,132,156,.35);
+    border-top-color:currentColor;border-radius:50%;animation:spin .8s linear infinite;vertical-align:-3px}
   @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>

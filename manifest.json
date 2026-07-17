@@ -4,8 +4,8 @@
   "description": "Live fully. We'll remember.",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#0f1117",
-  "theme_color": "#0f1117",
+  "background_color": "#0a0d18",
+  "theme_color": "#0a0d18",
   "icons": [
     {
       "src": "icon.png",

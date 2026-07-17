@@ -197,6 +197,8 @@
     box-shadow:0 0 60px rgba(231,200,140,.16), 0 0 0 1px rgba(255,255,255,.08);
     animation:breathe 6s ease-in-out infinite}
   @keyframes breathe{50%{box-shadow:0 0 95px rgba(231,200,140,.3), 0 0 0 1px rgba(231,200,140,.28)}}
+  .hubCenter button.listening img{animation:listenPulse 1.1s ease-in-out infinite}
+  @keyframes listenPulse{50%{box-shadow:0 0 130px rgba(231,200,140,.55), 0 0 0 2px rgba(231,200,140,.55)}}
   .orb{position:absolute;top:50%;left:50%;width:68px;height:68px;margin:-34px 0 0 -34px;
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
     border-radius:50%;color:var(--text);cursor:pointer;
@@ -369,7 +371,7 @@
     </form>
     <button class="btnGhost" id="authToggle">New here? Create an account</button>
     <p class="authMsg" id="authMsg"></p>
-    <p class="verTag">SECONDMIND · BUILD 15</p>
+    <p class="verTag">SECONDMIND · BUILD 16</p>
   </div>
 </div>
 
@@ -476,7 +478,7 @@
       <h2 class="sect">Gentle <em>reminders</em></h2>
       <p class="hint">Create one from any memory with “Remind me”.</p>
       <div id="remindersList"></div>
-      <p class="verTag">SECONDMIND · BUILD 15</p>
+      <p class="verTag">SECONDMIND · BUILD 16</p>
     </section>
 
   </main>
@@ -902,7 +904,32 @@ $('saveBtn').onclick = () => saveMemory(null);
 /* ---------- the echo: one AI entry to everything ---------- */
 function openEcho(){ $('echoBack').classList.remove('hidden'); setTimeout(() => $('echoInput').focus(), 60); }
 function closeEcho(){ $('echoBack').classList.add('hidden'); $('echoInput').value=''; }
-$('echoBtn').onclick = openEcho;
+let echoRec = null, echoListening = false;
+$('echoBtn').onclick = () => {
+  if (echoListening){ try { echoRec.stop(); } catch {} return; }
+  if (!SR || (IS_IOS && STANDALONE) || voiceFellBack) return openEcho();
+  try {
+    echoRec = new SR(); echoRec.lang = navigator.language || 'en-US'; echoRec.interimResults = false;
+    let got = false;
+    echoRec.onstart = () => { echoListening = true; $('echoBtn').classList.add('listening');
+      toast('Listening — ask or tell me anything'); };
+    echoRec.onresult = e => {
+      const t = e.results[0][0].transcript;
+      if (t){ got = true; routeText(t); }
+    };
+    echoRec.onend = () => { echoListening = false; $('echoBtn').classList.remove('listening');
+      if (!got) toast('Didn’t catch that — tap the echo again, or hold it for typing'); };
+    echoRec.onerror = ev => { echoListening = false; $('echoBtn').classList.remove('listening');
+      if (ev.error !== 'no-speech') openEcho(); };
+    echoRec.start();
+  } catch { openEcho(); }
+};
+let echoHold = null;
+$('echoBtn').addEventListener('pointerdown', () => {
+  echoHold = setTimeout(() => { try { echoRec?.stop(); } catch {}; openEcho(); }, 550);
+});
+$('echoBtn').addEventListener('pointerup', () => clearTimeout(echoHold));
+$('echoBtn').addEventListener('pointerleave', () => clearTimeout(echoHold));
 $('echoBack').onclick = e => { if (e.target.id === 'echoBack') closeEcho(); };
 $('echoInput').addEventListener('keydown', e => { if (e.key === 'Enter') routeEcho(); });
 $('echoGo').onclick = routeEcho;
@@ -918,8 +945,9 @@ $('echoMic').onclick = () => {
   } catch { $('echoInput').focus(); toast('Tap the mic key on your keyboard to dictate'); }
 };
 function goTab(tab){ document.querySelector(`nav.dock button[data-tab="${tab}"]`).click(); }
-async function routeEcho(){
-  const t = $('echoInput').value.trim();
+async function routeEcho(){ routeText($('echoInput').value); }
+async function routeText(raw){
+  const t = (raw || '').trim();
   if (!t) return;
   const l = t.toLowerCase().replace(/[.!]/g,'').trim();
 

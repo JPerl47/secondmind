@@ -1,5 +1,5 @@
 /* SecondMind service worker — offline shell + cached assets */
-const CACHE = 'secondmind-v10';
+const CACHE = 'secondmind-v11';
 const ASSETS = ['./', 'index.html', 'manifest.json', 'icon.png', 'icon-512.png', 'mark.png', 'logo.jpg'];
 
 self.addEventListener('install', e => {

@@ -91,6 +91,9 @@
   .btnGhost{background:none;border:none;color:var(--muted);width:100%;padding:14px;
     font-size:13.5px;letter-spacing:.02em;cursor:pointer;transition:color .2s}
   .btnGhost:hover{color:var(--text)}
+  .stayRow{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13.5px;
+    margin:2px 2px 16px;cursor:pointer;user-select:none}
+  .stayRow input{width:17px;height:17px;accent-color:var(--gold);cursor:pointer}
   .authMsg{font-size:14px;color:var(--muted);text-align:center;min-height:20px;margin:10px 0 0}
   .authMsg.err{color:var(--danger)} .authMsg.ok{color:var(--ok)}
 
@@ -328,9 +331,12 @@
 <div id="authView">
   <div class="authCard">
     <img class="hero" src="logo.jpg" alt="SecondMind — Live fully. We’ll remember."/>
-    <input class="field" id="email" type="email" placeholder="Email" autocomplete="email">
-    <input class="field" id="password" type="password" placeholder="Password" autocomplete="current-password">
-    <button class="btn" id="authBtn">Sign in</button>
+    <form id="authForm" novalidate>
+      <input class="field" id="email" name="email" type="email" placeholder="Email" autocomplete="username email">
+      <input class="field" id="password" name="password" type="password" placeholder="Password" autocomplete="current-password">
+      <label class="stayRow"><input type="checkbox" id="stayChk" checked><span>Stay signed in on this device</span></label>
+      <button class="btn" type="submit" id="authBtn">Sign in</button>
+    </form>
     <button class="btnGhost" id="authToggle">New here? Create an account</button>
     <p class="authMsg" id="authMsg"></p>
   </div>
@@ -462,7 +468,14 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const SUPABASE_URL = 'https://rjcmidmbsjorypyoruea.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_6xSiAZTCyM9m7J2JV5Kbdg_gbLeGjE9';
-const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+function staySignedIn(){ return localStorage.getItem('sm_stay') !== '0'; }
+function makeClient(){
+  return createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: { storage: staySignedIn() ? window.localStorage : window.sessionStorage,
+            persistSession: true, autoRefreshToken: true },
+  });
+}
+let sb = makeClient();
 
 const $ = id => document.getElementById(id);
 const toastEl = $('toast');
@@ -509,12 +522,22 @@ function autoCat(text){
 let signupMode = false;
 $('authToggle').onclick = () => {
   signupMode = !signupMode;
+  $('password').setAttribute('autocomplete', signupMode ? 'new-password' : 'current-password');
   $('authBtn').textContent = signupMode ? 'Create account' : 'Sign in';
   $('authToggle').textContent = signupMode ? 'Have an account? Sign in' : 'New here? Create an account';
   setAuthMsg('');
 };
 function setAuthMsg(m, cls){ const el=$('authMsg'); el.textContent=m; el.className='authMsg '+(cls||''); }
-$('authBtn').onclick = async () => {
+$('stayChk').checked = staySignedIn();
+$('stayChk').onchange = () => {
+  localStorage.setItem('sm_stay', $('stayChk').checked ? '1' : '0');
+  const old = sb;
+  sb = makeClient();
+  bindAuthState();
+  try { old.auth.stopAutoRefresh(); } catch {}
+};
+$('authForm').onsubmit = e => { e.preventDefault(); doAuth(); };
+async function doAuth(){
   const email = $('email').value.trim(), password = $('password').value;
   if (!email || !password) return setAuthMsg('Enter email and password.', 'err');
   $('authBtn').disabled = true;
@@ -529,16 +552,19 @@ $('authBtn').onclick = async () => {
     }
   } catch(e){ setAuthMsg(e.message || 'Something went wrong.', 'err'); }
   $('authBtn').disabled = false;
-};
+}
 $('signOutBtn').onclick = () => sb.auth.signOut();
 
-sb.auth.onAuthStateChange((_ev, session) => {
-  const authed = !!session;
-  $('authView').classList.toggle('hidden', authed);
-  $('appView').classList.toggle('hidden', !authed);
-  if (authed) { initCapture(); loadTimeline(true); loadReminders(); loadOnThisDay(); flushQueue(); loadFindCar();
-    sb.functions.invoke('ai', { body: { action: 'backfill' } }).catch(()=>{}); }
-});
+function bindAuthState(){
+  sb.auth.onAuthStateChange((_ev, session) => {
+    const authed = !!session;
+    $('authView').classList.toggle('hidden', authed);
+    $('appView').classList.toggle('hidden', !authed);
+    if (authed) { initCapture(); loadTimeline(true); loadReminders(); loadOnThisDay(); flushQueue(); loadFindCar();
+      sb.functions.invoke('ai', { body: { action: 'backfill' } }).catch(()=>{}); }
+  });
+}
+bindAuthState();
 
 /* ---------- offline ---------- */
 function updateOnline(){ $('offlineBadge').classList.toggle('hidden', navigator.onLine); }

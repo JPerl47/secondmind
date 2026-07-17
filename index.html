@@ -31,7 +31,6 @@
   .logo{font-size:30px;font-weight:800;letter-spacing:-1px;text-align:center;
     background:linear-gradient(100deg,#ecca8d,#f2e3c0 45%,#cdd5ea);
     -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin:0 0 4px}
-  .tagline{text-align:center;color:var(--muted);font-size:14px;margin:0 0 24px}
   .field{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:12px;
     color:var(--text);font-size:16px;padding:13px 14px;margin-bottom:12px;outline:none}
   .field:focus{border-color:var(--accent)}
@@ -48,8 +47,10 @@
     padding:14px 18px 10px;position:sticky;top:0;background:rgba(10,13,24,.92);
     backdrop-filter:blur(10px);z-index:5}
   header.top .logo{font-size:22px;text-align:left;margin:0}
-  #signOutBtn{background:none;border:1px solid var(--border);color:var(--muted);
+  .hdrBtns{display:flex;gap:8px}
+  .iconBtn{background:none;border:1px solid var(--border);color:var(--muted);
     border-radius:10px;padding:6px 12px;font-size:13px;cursor:pointer}
+  .iconBtn.on{color:var(--accent);border-color:var(--accent)}
   main{padding:6px 16px 24px;max-width:640px;margin:0 auto}
 
   /* Bottom nav */
@@ -63,16 +64,22 @@
   nav.tabs button.active{color:var(--accent)}
 
   h2.sect{font-size:18px;margin:14px 2px 12px}
+  .subHead{font-size:13px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;
+    color:var(--muted);margin:20px 2px 10px}
 
   /* Capture */
-  #memText{width:100%;min-height:110px;background:var(--card);border:1px solid var(--border);
+  .quickRow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+  .quickBtn{background:var(--card);border:1px solid var(--border);border-radius:12px;
+    color:var(--text);padding:12px 10px;font-size:13.5px;cursor:pointer;text-align:left}
+  .quickBtn .q{font-size:16px;margin-right:6px}
+  #memText{width:100%;min-height:100px;background:var(--card);border:1px solid var(--border);
     border-radius:14px;color:var(--text);font-size:17px;padding:14px;resize:vertical;outline:none}
   #memText:focus{border-color:var(--accent)}
   .capRow{display:flex;gap:10px;margin-top:12px}
   .capBtn{flex:1;background:var(--card);border:1px solid var(--border);border-radius:14px;
-    color:var(--text);padding:14px 6px;font-size:14px;cursor:pointer;display:flex;
+    color:var(--text);padding:12px 6px;font-size:14px;cursor:pointer;display:flex;
     flex-direction:column;align-items:center;gap:4px}
-  .capBtn .ico{font-size:24px}
+  .capBtn .ico{font-size:22px}
   .capBtn.recording{border-color:var(--danger);color:var(--danger);animation:pulse 1.2s infinite}
   @keyframes pulse{50%{opacity:.55}}
   #photoPreview{margin-top:12px;position:relative}
@@ -89,24 +96,38 @@
 
   /* Search */
   .searchRow{display:flex;gap:8px}
-  #searchInput{flex:1}
-  #searchBtn{width:auto;padding:0 20px}
+  #searchInput{flex:1;margin-bottom:0}
+  #micBtn{background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:12px;
+    font-size:18px;cursor:pointer;padding:0 14px}
+  #micBtn.recording{border-color:var(--danger);animation:pulse 1.2s infinite}
   .hint{color:var(--muted);font-size:13px;margin:10px 2px}
-  .dateNote{color:var(--accent2);font-size:13px;margin:8px 2px}
+  .dateNote{color:var(--accent);font-size:13px;margin:8px 2px}
+  .recentRow{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 
   /* Cards */
   .card{background:var(--card);border:1px solid var(--border);border-radius:16px;
     padding:14px 16px;margin-bottom:12px}
+  .card.pinnedCard{border-color:rgba(226,193,136,.5)}
   .card .content{font-size:16px;line-height:1.45;white-space:pre-wrap;word-break:break-word}
+  .card .ocr{font-size:13px;color:var(--muted);margin-top:8px;white-space:pre-wrap;
+    max-height:62px;overflow:hidden;border-left:2px solid var(--border);padding-left:8px}
   .card img.mem{width:100%;border-radius:12px;margin-top:10px;max-height:300px;object-fit:cover}
   .meta{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:10px;color:var(--muted);font-size:13px;align-items:center}
   .catTag{background:rgba(226,193,136,.15);color:#e8cf9f;border-radius:8px;padding:2px 8px;font-size:12px}
-  .cardActions{display:flex;gap:14px;margin-top:10px}
+  .cardActions{display:flex;gap:12px;margin-top:10px;flex-wrap:wrap}
   .cardActions button{background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;padding:4px 0}
   .cardActions button:hover{color:var(--text)}
+  .cardActions .actPin.pinned{color:var(--accent)}
   .dayHead{color:var(--muted);font-size:13px;font-weight:600;text-transform:uppercase;
     letter-spacing:.5px;margin:20px 2px 10px}
-  .empty{color:var(--muted);text-align:center;padding:40px 20px;font-size:15px;line-height:1.6}
+  .empty{color:var(--muted);text-align:center;padding:36px 20px;font-size:15px;line-height:1.6}
+
+  /* Timeline extras */
+  .viewToggle{display:flex;gap:8px;margin-bottom:10px}
+  .filterRow{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .filterRow::-webkit-scrollbar{display:none}
+  .filterRow .chip{flex:0 0 auto}
+  #mapWrap{height:430px;border-radius:16px;overflow:hidden;border:1px solid var(--border);margin-bottom:12px;background:var(--card)}
 
   /* Reminders */
   .rem{display:flex;align-items:flex-start;gap:12px}
@@ -124,12 +145,14 @@
     border-radius:20px 20px 0 0;padding:22px 20px calc(22px + env(safe-area-inset-bottom))}
   #modal h3{margin:0 0 14px;font-size:17px}
 
-  /* Toast */
+  /* Toast + offline */
   #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom));
     background:#222941;color:var(--text);padding:11px 18px;border-radius:12px;font-size:14px;
     z-index:30;box-shadow:0 6px 24px rgba(0,0,0,.4);transition:opacity .3s;opacity:0;pointer-events:none;
     max-width:88vw;text-align:center}
   #toast.show{opacity:1}
+  #offlineBadge{position:fixed;top:calc(env(safe-area-inset-top) + 10px);left:50%;transform:translateX(-50%);
+    background:#4a2330;color:#ffb4b4;font-size:12px;padding:5px 14px;border-radius:999px;z-index:40}
   .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(127,132,156,.35);
     border-top-color:currentColor;border-radius:50%;animation:spin .8s linear infinite;vertical-align:-3px}
   @keyframes spin{to{transform:rotate(360deg)}}
@@ -151,17 +174,26 @@
 <div id="appView" class="hidden">
   <header class="top">
     <h1 class="logo" style="display:flex;align-items:center;gap:9px"><img src="mark.png" alt="" style="height:28px;border-radius:7px"/>SecondMind</h1>
-    <button id="signOutBtn">Sign out</button>
+    <div class="hdrBtns">
+      <button class="iconBtn" id="exportBtn" title="Export my data">⬇</button>
+      <button class="iconBtn" id="signOutBtn">Sign out</button>
+    </div>
   </header>
   <main>
 
     <!-- CAPTURE -->
     <section id="tab-capture">
       <h2 class="sect">Remember something</h2>
-      <textarea id="memText" placeholder="e.g. Parked in lot C, row 14 &#10;Sarah recommended Nari in Japantown &#10;Replaced the car battery today"></textarea>
+      <div class="quickRow">
+        <button class="quickBtn" data-quick="park"><span class="q">🅿️</span>Parked here <span style="color:var(--muted);font-size:11.5px">1-tap save</span></button>
+        <button class="quickBtn" data-quick="left"><span class="q">🔑</span>I left ___ at ___</button>
+        <button class="quickBtn" data-quick="meds"><span class="q">💊</span>Took medication</button>
+        <button class="quickBtn" data-quick="idea"><span class="q">💭</span>Idea…</button>
+      </div>
+      <textarea id="memText" placeholder="e.g. Parked in lot C, row 14 &#10;Sarah recommended Nari in Japantown &#10;Wifi password is on the photo"></textarea>
       <div class="capRow">
         <button class="capBtn" id="voiceBtn"><span class="ico">🎤</span><span id="voiceLbl">Speak</span></button>
-        <button class="capBtn" id="photoBtn"><span class="ico">📷</span>Photo</button>
+        <button class="capBtn" id="photoBtn"><span class="ico">📷</span><span>Photo <span style="color:var(--muted);font-size:11px">text auto-read</span></span></button>
       </div>
       <input type="file" id="photoInput" accept="image/*" class="hidden">
       <div id="photoPreview" class="hidden"><img id="previewImg" alt="preview"><button id="removePhoto">✕</button></div>
@@ -174,6 +206,11 @@
         <input class="field" id="whenInput" type="datetime-local">
       </div>
       <button class="btn" id="saveBtn">Save memory</button>
+
+      <div id="otdWrap" class="hidden">
+        <div class="subHead">🕰 On this day</div>
+        <div id="otdList"></div>
+      </div>
     </section>
 
     <!-- ASK -->
@@ -181,9 +218,10 @@
       <h2 class="sect">Ask your memory</h2>
       <div class="searchRow">
         <input class="field" id="searchInput" type="search" placeholder="Where did I park last month?">
-        <button class="btn" id="searchBtn">🔎</button>
+        <button id="micBtn" title="Voice search">🎤</button>
+        <button class="btn" id="searchBtn" style="width:auto;padding:0 18px">🔎</button>
       </div>
-      <p class="hint">Try: “restaurant Sarah recommended” · “car battery” · “parking in June”</p>
+      <div class="recentRow" id="askChips"></div>
       <p class="dateNote hidden" id="dateNote"></p>
       <div id="searchResults"></div>
     </section>
@@ -191,6 +229,17 @@
     <!-- TIMELINE -->
     <section id="tab-timeline" class="hidden">
       <h2 class="sect">Timeline</h2>
+      <div class="viewToggle">
+        <button class="iconBtn on" id="listViewBtn">☰ List</button>
+        <button class="iconBtn" id="mapViewBtn">🗺 Map</button>
+      </div>
+      <div class="filterRow" id="filterRow"></div>
+      <div id="mapWrap" class="hidden"></div>
+      <div id="pinnedWrap" class="hidden">
+        <div class="subHead">⭐ Pinned</div>
+        <div id="pinnedList"></div>
+        <div class="subHead">Everything</div>
+      </div>
       <div id="timelineList"></div>
       <button class="btnGhost hidden" id="moreBtn">Load more</button>
     </section>
@@ -223,6 +272,7 @@
 </div>
 
 <div id="toast"></div>
+<div id="offlineBadge" class="hidden">📴 Offline — captures will sync later</div>
 
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -237,6 +287,8 @@ let toastTimer;
 function toast(msg){ toastEl.textContent = msg; toastEl.classList.add('show');
   clearTimeout(toastTimer); toastTimer = setTimeout(()=>toastEl.classList.remove('show'), 3200); }
 
+if ('serviceWorker' in navigator) { try { navigator.serviceWorker.register('sw.js'); } catch {} }
+
 /* ---------- categories ---------- */
 const CATS = {
   parking:'🅿️', food:'🍽️', recommendation:'💡', purchase:'🧾', maintenance:'🔧',
@@ -248,10 +300,10 @@ const CAT_WORDS = [
   ['recommendation',['recommend','suggested','suggest','check out','should try','worth trying','must see']],
   ['food',['restaurant','cafe','café','coffee','ate ','dinner','lunch','brunch','pizza','sushi','taco','ramen','bakery','food']],
   ['purchase',['bought','purchase','receipt','paid','ordered','order ','$','cost','price','warranty','returned']],
-  ['health',['doctor','dentist','appointment','prescription','medication','vaccine','dose','allerg','pharmacy']],
+  ['health',['doctor','dentist','appointment','prescription','medication','vaccine','dose','allerg','pharmacy','took my']],
   ['travel',['flight','hotel','airbnb','airport','gate ','trip','vacation','passport']],
   ['people',['met ','birthday','anniversary','name is','phone number','moved to']],
-  ['home',['wifi','router','paint','model number','serial','thermostat','breaker','garage code']],
+  ['home',['wifi','router','paint','model number','serial','thermostat','breaker','garage code','left my','left the']],
   ['idea',['idea','maybe i should','what if','someday','todo']],
 ];
 function autoCat(text){
@@ -278,8 +330,7 @@ $('authBtn').onclick = async () => {
     if (signupMode) {
       const { data, error } = await sb.auth.signUp({ email, password });
       if (error) throw error;
-      if (data.session) { /* auto-confirmed */ }
-      else setAuthMsg('Almost there — check your email and click the confirmation link, then sign in here.', 'ok');
+      if (!data.session) setAuthMsg('Almost there — check your email and click the confirmation link, then sign in here.', 'ok');
     } else {
       const { error } = await sb.auth.signInWithPassword({ email, password });
       if (error) throw error;
@@ -293,8 +344,29 @@ sb.auth.onAuthStateChange((_ev, session) => {
   const authed = !!session;
   $('authView').classList.toggle('hidden', authed);
   $('appView').classList.toggle('hidden', !authed);
-  if (authed) { initCapture(); loadTimeline(true); loadReminders(); }
+  if (authed) { initCapture(); loadTimeline(true); loadReminders(); loadOnThisDay(); flushQueue(); }
 });
+
+/* ---------- offline ---------- */
+function updateOnline(){ $('offlineBadge').classList.toggle('hidden', navigator.onLine); }
+window.addEventListener('online', () => { updateOnline(); flushQueue(); });
+window.addEventListener('offline', updateOnline);
+updateOnline();
+
+function getQueue(){ try { return JSON.parse(localStorage.getItem('sm_queue')||'[]'); } catch { return []; } }
+function setQueue(q){ localStorage.setItem('sm_queue', JSON.stringify(q)); }
+async function flushQueue(){
+  const q = getQueue();
+  if (!q.length || !navigator.onLine) return;
+  let ok = 0;
+  for (const row of [...q]) {
+    const { error } = await sb.from('memories').insert(row);
+    if (error) break;
+    q.shift(); ok++;
+  }
+  setQueue(q);
+  if (ok) { toast(`☁️ Synced ${ok} offline ${ok===1?'memory':'memories'}`); loadTimeline(true); }
+}
 
 /* ---------- tabs ---------- */
 document.querySelectorAll('nav.tabs button').forEach(b => b.onclick = () => {
@@ -303,7 +375,7 @@ document.querySelectorAll('nav.tabs button').forEach(b => b.onclick = () => {
     $('tab-'+t).classList.toggle('hidden', t !== b.dataset.tab));
   if (b.dataset.tab==='timeline') loadTimeline(true);
   if (b.dataset.tab==='reminders') loadReminders();
-  if (b.dataset.tab==='ask') $('searchInput').focus();
+  if (b.dataset.tab==='ask') { renderAskChips(); $('searchInput').focus(); }
 });
 
 /* ---------- capture ---------- */
@@ -312,6 +384,9 @@ function initCapture(){
   if (capInited) return; capInited = true;
   buildCatChips();
   getLocation();
+  const p = new URLSearchParams(location.search);
+  const shared = [p.get('share_title'), p.get('share_text'), p.get('share_url')].filter(Boolean).join('\n');
+  if (shared) { $('memText').value = shared; paintCatChips(); toast('Shared content added — tap Save'); }
 }
 function getLocation(){
   if (!navigator.geolocation){ $('locChip').textContent='📍 unavailable'; return; }
@@ -342,6 +417,24 @@ $('whenChip').onclick = () => {
   }
 };
 
+/* quick taps */
+document.querySelectorAll('.quickBtn').forEach(b => b.onclick = async () => {
+  const kind = b.dataset.quick;
+  if (kind === 'park') {
+    const label = loc?.label ? ' — ' + loc.label : '';
+    await saveMemory({ content: 'Parked here' + label, category: 'parking' });
+    return;
+  }
+  const presets = {
+    left: { text: 'I left  at ', cat: 'home', caret: 7 },
+    meds: { text: 'Took medication', cat: 'health', caret: 15 },
+    idea: { text: 'Idea: ', cat: 'idea', caret: 6 },
+  };
+  const p = presets[kind];
+  $('memText').value = p.text; chosenCat = p.cat; paintCatChips();
+  $('memText').focus(); $('memText').setSelectionRange(p.caret, p.caret);
+});
+
 let chosenCat = null;
 function buildCatChips(){
   const box = $('catChips'); box.innerHTML='';
@@ -360,7 +453,7 @@ function paintCatChips(){
 }
 $('memText').addEventListener('input', paintCatChips);
 
-/* voice */
+/* voice capture */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 let rec = null, recOn = false;
 if (!SR) $('voiceBtn').style.display='none';
@@ -402,36 +495,110 @@ function compressImage(file){
   });
 }
 
-/* save */
-$('saveBtn').onclick = async () => {
-  const text = $('memText').value.trim();
-  if (!text && !photoFile) return toast('Write, speak, or add a photo first');
-  $('saveBtn').disabled = true; $('saveBtn').innerHTML = '<span class="spinner"></span> Saving…';
+/* OCR: read text out of photos in the background so they become searchable */
+let ocrLib = null;
+async function runOcr(blob, memId){
   try {
-    const { data: { user } } = await sb.auth.getUser();
-    let photo_path = null;
-    if (photoFile){
-      photo_path = `${user.id}/${Date.now()}.jpg`;
-      const { error: upErr } = await sb.storage.from('photos').upload(photo_path, photoFile, { contentType:'image/jpeg' });
-      if (upErr) throw upErr;
+    if (!ocrLib) {
+      await new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.0/tesseract.min.js';
+        s.onload = res; s.onerror = rej; document.head.appendChild(s);
+      });
+      ocrLib = window.Tesseract;
     }
+    const { data } = await ocrLib.recognize(blob, 'eng');
+    const text = (data.text || '').trim().slice(0, 15000);
+    if (text.length > 3) {
+      await sb.from('memories').update({ ocr_text: text }).eq('id', memId);
+      toast('📖 Photo text saved — it’s searchable now');
+    }
+  } catch {}
+}
+
+/* save */
+async function saveMemory(quick){
+  const text = quick ? quick.content : $('memText').value.trim();
+  if (!text && !photoFile) return toast('Write, speak, or add a photo first');
+  const btn = $('saveBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving…';
+  try {
     const row = {
-      kind: photoFile ? 'photo' : memKind,
+      kind: (photoFile && !quick) ? 'photo' : memKind,
       content: text || null,
-      photo_path,
-      category: chosenCat || autoCat(text),
+      photo_path: null,
+      category: quick ? quick.category : (chosenCat || autoCat(text)),
       lat: loc?.lat ?? null, lng: loc?.lng ?? null, place_label: loc?.label ?? null,
     };
-    if (!$('whenWrap').classList.contains('hidden') && $('whenInput').value)
+    if (quick) row.kind = 'note';
+    if (!quick && !$('whenWrap').classList.contains('hidden') && $('whenInput').value)
       row.happened_at = new Date($('whenInput').value).toISOString();
-    const { error } = await sb.from('memories').insert(row);
+
+    if (!navigator.onLine && !photoFile) {
+      const q = getQueue(); q.push(row); setQueue(q);
+      if (!quick) resetCapture();
+      toast('📴 Saved offline — will sync automatically');
+      return;
+    }
+    const { data: { user } } = await sb.auth.getUser();
+    let blobForOcr = null;
+    if (photoFile && !quick){
+      row.photo_path = `${user.id}/${Date.now()}.jpg`;
+      blobForOcr = photoFile;
+      const { error: upErr } = await sb.storage.from('photos').upload(row.photo_path, photoFile, { contentType:'image/jpeg' });
+      if (upErr) throw upErr;
+    }
+    const { data: inserted, error } = await sb.from('memories').insert(row).select('id').single();
     if (error) throw error;
-    $('memText').value=''; $('removePhoto').onclick(); chosenCat=null; memKind='note'; paintCatChips();
-    $('whenWrap').classList.add('hidden'); $('whenChip').classList.remove('on'); $('whenInput').value='';
-    toast('✅ Remembered');
-  } catch(e){ toast('Could not save: ' + (e.message||e)); }
-  $('saveBtn').disabled = false; $('saveBtn').textContent = 'Save memory';
-};
+    if (!quick) resetCapture();
+    toast(quick ? '🅿️ Parking spot remembered' : '✅ Remembered');
+    if (blobForOcr && inserted?.id) runOcr(blobForOcr, inserted.id);
+  } catch(e){
+    if (!navigator.onLine || (e.message||'').includes('Failed to fetch')) {
+      const q = getQueue();
+      q.push({ content: text || null, category: quick ? quick.category : (chosenCat || autoCat(text)),
+               lat: loc?.lat ?? null, lng: loc?.lng ?? null, place_label: loc?.label ?? null });
+      setQueue(q);
+      if (!quick) resetCapture();
+      toast('📴 Saved offline — will sync automatically');
+    } else toast('Could not save: ' + (e.message||e));
+  } finally {
+    btn.disabled = false; btn.textContent = 'Save memory';
+  }
+}
+function resetCapture(){
+  $('memText').value=''; photoFile=null; $('photoPreview').classList.add('hidden'); $('photoInput').value='';
+  chosenCat=null; memKind='note'; paintCatChips();
+  $('whenWrap').classList.add('hidden'); $('whenChip').classList.remove('on'); $('whenInput').value='';
+}
+$('saveBtn').onclick = () => saveMemory(null);
+
+/* ---------- on this day ---------- */
+async function loadOnThisDay(){
+  const offsets = [{m:1,l:'1 month ago'},{m:6,l:'6 months ago'},{m:12,l:'1 year ago'},{m:24,l:'2 years ago'}];
+  const now = new Date();
+  const results = await Promise.all(offsets.map(async o => {
+    const d = new Date(now.getFullYear(), now.getMonth()-o.m, now.getDate());
+    const from = new Date(d); from.setHours(0,0,0,0);
+    const to = new Date(d); to.setHours(23,59,59,999);
+    const { data } = await sb.from('memories').select('*')
+      .gte('happened_at', from.toISOString()).lte('happened_at', to.toISOString())
+      .order('happened_at', { ascending:false }).limit(2);
+    return (data||[]).map(m => ({ ...m, _otd: o.l }));
+  }));
+  const flat = results.flat();
+  if (!flat.length) return;
+  $('otdWrap').classList.remove('hidden');
+  const box = $('otdList'); box.innerHTML='';
+  for (const m of flat){
+    const el = card(m);
+    const tag = document.createElement('div');
+    tag.style.cssText = 'color:var(--accent);font-size:12px;margin-bottom:6px';
+    tag.textContent = '🕰 ' + m._otd;
+    el.prepend(tag);
+    box.appendChild(el);
+  }
+}
 
 /* ---------- date parsing for search ---------- */
 const MONTHS = ['january','february','march','april','may','june','july','august','september','october','november','december'];
@@ -471,11 +638,41 @@ function parseDates(q){
 }
 
 /* ---------- search ---------- */
+const SAMPLES = ['Where did I park?','restaurant recommended','wifi password','car battery','parking last month'];
+function getRecents(){ try { return JSON.parse(localStorage.getItem('sm_recent')||'[]'); } catch { return []; } }
+function addRecent(q){
+  const r = getRecents().filter(x => x !== q); r.unshift(q);
+  localStorage.setItem('sm_recent', JSON.stringify(r.slice(0,6)));
+}
+function renderAskChips(){
+  const box = $('askChips'); box.innerHTML='';
+  const recents = getRecents();
+  const items = recents.length ? recents : SAMPLES;
+  for (const q of items){
+    const b = document.createElement('button');
+    b.className='chip'; b.textContent = (recents.length?'↩ ':'') + q;
+    b.onclick = () => { $('searchInput').value = q; doSearch(); };
+    box.appendChild(b);
+  }
+}
 $('searchBtn').onclick = doSearch;
 $('searchInput').addEventListener('keydown', e => { if (e.key==='Enter') doSearch(); });
+let askRec = null, askRecOn = false;
+if (!SR) $('micBtn').style.display='none';
+$('micBtn').onclick = () => {
+  if (askRecOn){ askRec.stop(); return; }
+  askRec = new SR(); askRec.lang='en-US'; askRec.interimResults=false;
+  askRec.onresult = e => {
+    const txt = e.results[0][0].transcript;
+    if (txt){ $('searchInput').value = txt; doSearch(); }
+  };
+  askRec.onend = () => { askRecOn=false; $('micBtn').classList.remove('recording'); };
+  askRec.start(); askRecOn=true; $('micBtn').classList.add('recording');
+};
 async function doSearch(){
   const raw = $('searchInput').value.trim();
   if (!raw) return;
+  addRecent(raw); renderAskChips();
   const { cleaned, from, to, note } = parseDates(raw);
   $('dateNote').classList.toggle('hidden', !note);
   if (note) $('dateNote').textContent = '🗓 filtering to ' + note;
@@ -492,11 +689,48 @@ async function doSearch(){
 }
 
 /* ---------- timeline ---------- */
-let tlOffset = 0; const PAGE = 40;
+let tlOffset = 0, tlCat = null, tlView = 'list', pinnedShown = false;
+const PAGE_SIZE = 40;
+function buildFilterRow(){
+  const box = $('filterRow'); box.innerHTML='';
+  const all = document.createElement('button');
+  all.className = 'chip' + (tlCat===null?' on':''); all.textContent = 'All';
+  all.onclick = () => { tlCat = null; tlView==='map' ? (buildFilterRow(), renderMap()) : loadTimeline(true); };
+  box.appendChild(all);
+  Object.entries(CATS).forEach(([cat, emo]) => {
+    const b = document.createElement('button');
+    b.className = 'chip' + (tlCat===cat?' on':''); b.textContent = emo+' '+cat;
+    b.onclick = () => { tlCat = (tlCat===cat)?null:cat; tlView==='map' ? (buildFilterRow(), renderMap()) : loadTimeline(true); };
+    box.appendChild(b);
+  });
+}
+$('listViewBtn').onclick = () => setView('list');
+$('mapViewBtn').onclick = () => setView('map');
+function setView(v){
+  tlView = v;
+  $('listViewBtn').classList.toggle('on', v==='list');
+  $('mapViewBtn').classList.toggle('on', v==='map');
+  $('mapWrap').classList.toggle('hidden', v!=='map');
+  $('timelineList').classList.toggle('hidden', v==='map');
+  $('pinnedWrap').classList.toggle('hidden', v==='map' || !pinnedShown);
+  $('moreBtn').classList.add('hidden');
+  if (v==='map'){ buildFilterRow(); renderMap(); } else loadTimeline(true);
+}
+async function loadPinned(){
+  const { data } = await sb.from('memories').select('*').eq('pinned', true)
+    .order('happened_at', { ascending:false }).limit(20);
+  pinnedShown = !!data?.length;
+  $('pinnedWrap').classList.toggle('hidden', !pinnedShown || tlView==='map');
+  if (!pinnedShown) return;
+  const box = $('pinnedList'); box.innerHTML='';
+  for (const m of data) box.appendChild(card(m));
+}
 async function loadTimeline(reset){
-  if (reset){ tlOffset=0; $('timelineList').innerHTML=''; }
-  const { data, error } = await sb.from('memories').select('*')
-    .order('happened_at', { ascending:false }).range(tlOffset, tlOffset+PAGE-1);
+  buildFilterRow();
+  if (reset){ tlOffset=0; $('timelineList').innerHTML=''; delete $('timelineList').dataset.lastDay; loadPinned(); }
+  let qy = sb.from('memories').select('*').order('happened_at', { ascending:false });
+  if (tlCat) qy = qy.eq('category', tlCat);
+  const { data, error } = await qy.range(tlOffset, tlOffset+PAGE_SIZE-1);
   if (error){ toast(error.message); return; }
   if (!data.length && tlOffset===0){
     $('timelineList').innerHTML = '<p class="empty">Nothing here yet.<br>Capture your first memory in the ➕ tab.</p>';
@@ -515,9 +749,54 @@ async function loadTimeline(reset){
   }
   $('timelineList').dataset.lastDay = lastDay;
   tlOffset += data.length;
-  $('moreBtn').classList.toggle('hidden', data.length < PAGE);
+  $('moreBtn').classList.toggle('hidden', data.length < PAGE_SIZE || tlView==='map');
 }
 $('moreBtn').onclick = () => loadTimeline(false);
+
+/* ---------- map view ---------- */
+let leafletReady = null, map = null, markerLayer = null;
+function ensureLeaflet(){
+  if (leafletReady) return leafletReady;
+  leafletReady = new Promise((res, rej) => {
+    const css = document.createElement('link');
+    css.rel='stylesheet'; css.href='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
+    document.head.appendChild(css);
+    const s = document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+    s.onload=res; s.onerror=rej; document.head.appendChild(s);
+  });
+  return leafletReady;
+}
+async function renderMap(){
+  try { await ensureLeaflet(); } catch { return toast('Map could not load'); }
+  let qy = sb.from('memories').select('id,content,category,lat,lng,happened_at,place_label')
+    .not('lat','is',null).order('happened_at',{ascending:false}).limit(500);
+  if (tlCat) qy = qy.eq('category', tlCat);
+  const { data } = await qy;
+  if (!map){
+    map = L.map('mapWrap', { zoomControl: true });
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      { attribution:'© OpenStreetMap', maxZoom: 19 }).addTo(map);
+    markerLayer = L.layerGroup().addTo(map);
+  }
+  markerLayer.clearLayers();
+  if (!data?.length){ map.setView([39.5, -98.35], 4); toast('No located memories yet'); return; }
+  const pts = [];
+  for (const m of data){
+    pts.push([m.lat, m.lng]);
+    const mk = L.marker([m.lat, m.lng]).addTo(markerLayer);
+    const when = new Date(m.happened_at).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+    const div = document.createElement('div');
+    div.style.cssText='max-width:200px;font-size:13px';
+    div.textContent = (CATS[m.category]||'📌')+' '+((m.content||m.place_label||'memory').slice(0,90));
+    const small = document.createElement('div');
+    small.style.cssText='color:#666;margin-top:4px'; small.textContent = when;
+    div.appendChild(small);
+    mk.bindPopup(div);
+  }
+  map.fitBounds(pts, { padding:[30,30], maxZoom: 15 });
+  setTimeout(() => map.invalidateSize(), 100);
+}
 
 /* ---------- memory card ---------- */
 const urlCache = new Map();
@@ -528,11 +807,12 @@ async function signedUrl(path){
   return data?.signedUrl;
 }
 function card(m){
-  const el = document.createElement('div'); el.className='card'; el.dataset.id=m.id;
+  const el = document.createElement('div'); el.className='card' + (m.pinned?' pinnedCard':''); el.dataset.id=m.id;
   const when = new Date(m.happened_at).toLocaleString(undefined,{ month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit' });
   el.innerHTML = `
     ${m.content ? `<div class="content"></div>` : ''}
     ${m.photo_path ? `<img class="mem" alt="memory photo">` : ''}
+    ${m.ocr_text ? `<div class="ocr"></div>` : ''}
     <div class="meta">
       <span class="catTag">${CATS[m.category]||'📌'} ${m.category}</span>
       <span>${when}</span>
@@ -541,12 +821,25 @@ function card(m){
       ${m.kind==='voice' ? '<span>🎤</span>' : ''}
     </div>
     <div class="cardActions">
+      <button class="actPin ${m.pinned?'pinned':''}">${m.pinned?'★ Unpin':'⭐ Pin'}</button>
       <button class="actRemind">⏰ Remind me</button>
       ${m.lat!=null ? `<button class="actMap">🗺 Map</button>` : ''}
       <button class="actDel">🗑 Delete</button>
     </div>`;
   if (m.content) el.querySelector('.content').textContent = m.content;
+  if (m.ocr_text) el.querySelector('.ocr').textContent = '📖 ' + m.ocr_text.slice(0, 200);
   if (m.photo_path) signedUrl(m.photo_path).then(u => { if(u) el.querySelector('img.mem').src=u; });
+  el.querySelector('.actPin').onclick = async (ev) => {
+    const newVal = !m.pinned;
+    const { error } = await sb.from('memories').update({ pinned: newVal }).eq('id', m.id);
+    if (error) return toast(error.message);
+    m.pinned = newVal;
+    ev.target.textContent = newVal ? '★ Unpin' : '⭐ Pin';
+    ev.target.classList.toggle('pinned', newVal);
+    el.classList.toggle('pinnedCard', newVal);
+    toast(newVal ? '⭐ Pinned' : 'Unpinned');
+    loadPinned();
+  };
   el.querySelector('.actRemind').onclick = () => openReminderModal(m);
   const mapBtn = el.querySelector('.actMap');
   if (mapBtn) mapBtn.onclick = () => window.open(`https://maps.google.com/?q=${m.lat},${m.lng}`,'_blank');
@@ -603,6 +896,24 @@ async function loadReminders(){
     box.appendChild(el);
   }
 }
+
+/* ---------- export ---------- */
+$('exportBtn').onclick = async () => {
+  toast('Preparing your export…');
+  const [mem, rem] = await Promise.all([
+    sb.from('memories').select('*').order('happened_at'),
+    sb.from('reminders').select('*').order('due_at'),
+  ]);
+  const blob = new Blob([JSON.stringify({
+    exported_at: new Date().toISOString(),
+    memories: mem.data || [], reminders: rem.data || [],
+  }, null, 2)], { type:'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'secondmind-export.json';
+  a.click();
+  toast('⬇ Export downloaded — your data is yours');
+};
 </script>
 </body>
 </html>

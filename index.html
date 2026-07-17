@@ -204,6 +204,20 @@
   .orb svg.i{width:21px;height:21px;color:var(--gold)}
   .orb span{font-family:'Jost',sans-serif;font-size:8.5px;font-weight:500;
     letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .findCar{display:flex;align-items:center;gap:13px;width:min(88vw,400px);margin:4px auto 10px;
+    padding:14px 18px;border-radius:16px;color:var(--text);cursor:pointer;text-align:left;
+    background-color:transparent;border:1px solid transparent;
+    background-image:linear-gradient(165deg,rgba(231,200,140,.08),rgba(255,255,255,.02)),
+      linear-gradient(140deg,rgba(231,200,140,.5),rgba(231,200,140,.15) 45%,rgba(201,211,234,.3));
+    background-origin:border-box;background-clip:padding-box,border-box;
+    box-shadow:0 12px 30px rgba(0,0,0,.35);transition:filter .2s;
+    animation:rise .45s cubic-bezier(.2,.7,.3,1) both}
+  .findCar:hover{filter:brightness(1.15)}
+  .findCar > svg.i:first-child{color:var(--gold);width:22px;height:22px}
+  .findCar .fcText{flex:1}
+  .findCar b{display:block;font-size:14px;font-weight:600;letter-spacing:.02em}
+  .findCar small{display:block;color:var(--muted);font-size:11.5px;margin-top:1px}
+  .findCar > svg.i:last-child{color:var(--muted)}
   .composerHead{display:flex;align-items:center;justify-content:space-between;margin:4px 0 14px}
   #composer{animation:rise .35s cubic-bezier(.2,.7,.3,1) both}
 
@@ -348,6 +362,12 @@
         <button class="orb" style="--a:180deg" data-act="left"><svg class="i" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3m-4 1 3 3m-6 0 2 2"/></svg><span>I left…</span></button>
         <button class="orb" style="--a:225deg" data-act="receipt"><svg class="i" viewBox="0 0 24 24"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2V2z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg><span>Receipt</span></button>
       </div>
+
+      <button id="findCar" class="findCar hidden">
+        <svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5 5-2z"/></svg>
+        <span class="fcText"><b>Find my car</b><small id="findCarSub"></small></span>
+        <svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px"><path d="m9 6 6 6-6 6"/></svg>
+      </button>
 
       <div id="composer" class="hidden">
       <div class="composerHead"><span class="eyebrow" style="margin:0">New memory</span><button id="composerClose" class="iconBtn">Close</button></div>
@@ -516,7 +536,7 @@ sb.auth.onAuthStateChange((_ev, session) => {
   const authed = !!session;
   $('authView').classList.toggle('hidden', authed);
   $('appView').classList.toggle('hidden', !authed);
-  if (authed) { initCapture(); loadTimeline(true); loadReminders(); loadOnThisDay(); flushQueue();
+  if (authed) { initCapture(); loadTimeline(true); loadReminders(); loadOnThisDay(); flushQueue(); loadFindCar();
     sb.functions.invoke('ai', { body: { action: 'backfill' } }).catch(()=>{}); }
 });
 
@@ -595,11 +615,24 @@ $('whenChip').onclick = () => {
 function openComposer(){ $('hub').classList.add('hidden'); $('composer').classList.remove('hidden'); }
 function closeComposer(){ $('composer').classList.add('hidden'); $('hub').classList.remove('hidden'); }
 $('composerClose').onclick = () => { closeComposer(); };
+function freshFix(){
+  return new Promise(res => {
+    if (!navigator.geolocation) return res(null);
+    navigator.geolocation.getCurrentPosition(
+      p => res({ lat: p.coords.latitude, lng: p.coords.longitude }),
+      () => res(null),
+      { enableHighAccuracy: true, timeout: 9000, maximumAge: 0 });
+  });
+}
 document.querySelectorAll('.orb').forEach(b => b.onclick = async () => {
   const act = b.dataset.act;
   if (act === 'park') {
+    toast('Dropping a pin at your spot…');
+    const fix = await freshFix();
+    if (fix) loc = { ...(loc || {}), ...fix, label: loc?.label ?? null };
     const label = loc?.label ? ' — ' + loc.label : '';
     await saveMemory({ content: 'Parked here' + label, category: 'parking' });
+    loadFindCar();
     return;
   }
   const presets = {
@@ -737,6 +770,7 @@ async function saveMemory(quick){
     if (error) throw error;
     if (!quick) resetCapture();
     toast(quick ? 'Parking spot remembered' : 'Remembered');
+    loadFindCar();
     if (inserted?.id) sb.functions.invoke('ai', { body: { action: 'embed_memory', id: inserted.id } }).catch(()=>{});
     if (blobForOcr && inserted?.id) {
       runOcr(blobForOcr, inserted.id);
@@ -762,6 +796,38 @@ function resetCapture(){
   closeComposer();
 }
 $('saveBtn').onclick = () => saveMemory(null);
+
+/* ---------- find my car ---------- */
+function timeAgo(iso){
+  const mins = Math.max(1, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (mins < 60) return mins + 'm ago';
+  const h = Math.round(mins / 60);
+  if (h < 24) return h + 'h ago';
+  return Math.round(h / 24) + 'd ago';
+}
+function directionsUrl(lat, lng, walk){
+  const apple = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  return apple
+    ? `https://maps.apple.com/?daddr=${lat},${lng}&dirflg=${walk ? 'w' : 'd'}`
+    : `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=${walk ? 'walking' : 'driving'}`;
+}
+let carSpot = null;
+async function loadFindCar(){
+  const { data } = await sb.from('memories')
+    .select('id,lat,lng,place_label,happened_at')
+    .eq('category','parking').not('lat','is',null)
+    .order('happened_at', { ascending: false }).limit(1);
+  const m = data?.[0];
+  const fresh = m && (Date.now() - new Date(m.happened_at).getTime()) < 7 * 864e5;
+  carSpot = fresh ? m : null;
+  $('findCar').classList.toggle('hidden', !carSpot);
+  if (carSpot) $('findCarSub').textContent =
+    'parked ' + timeAgo(carSpot.happened_at) + (carSpot.place_label ? ' · ' + carSpot.place_label : '');
+}
+$('findCar').onclick = () => {
+  if (!carSpot) return;
+  window.open(directionsUrl(carSpot.lat, carSpot.lng, true), '_blank');
+};
 
 /* ---------- on this day ---------- */
 async function loadOnThisDay(){
@@ -1038,7 +1104,7 @@ function card(m){
     <div class="cardActions">
       <button class="actPin ${m.pinned?'pinned':''}">${I.pin}<span>${m.pinned?'Unpin':'Pin'}</span></button>
       <button class="actRemind">${I.bell}<span>Remind me</span></button>
-      ${m.lat!=null ? `<button class="actMap">${I.map}<span>Map</span></button>` : ''}
+      ${m.lat!=null ? `<button class="actMap">${I.map}<span>Directions</span></button>` : ''}
       <button class="actDel">${I.trash}<span>Delete</span></button>
     </div>`;
   if (m.content) el.querySelector('.content').textContent = m.content;
@@ -1058,7 +1124,7 @@ function card(m){
   };
   el.querySelector('.actRemind').onclick = () => openReminderModal(m);
   const mapBtn = el.querySelector('.actMap');
-  if (mapBtn) mapBtn.onclick = () => window.open(`https://maps.google.com/?q=${m.lat},${m.lng}`,'_blank');
+  if (mapBtn) mapBtn.onclick = () => window.open(directionsUrl(m.lat, m.lng, m.category === 'parking'), '_blank');
   el.querySelector('.actDel').onclick = async () => {
     el.style.opacity=.4;
     const { error } = await sb.from('memories').delete().eq('id', m.id);

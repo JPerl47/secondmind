@@ -461,7 +461,8 @@ sb.auth.onAuthStateChange((_ev, session) => {
   const authed = !!session;
   $('authView').classList.toggle('hidden', authed);
   $('appView').classList.toggle('hidden', !authed);
-  if (authed) { initCapture(); loadTimeline(true); loadReminders(); loadOnThisDay(); flushQueue(); }
+  if (authed) { initCapture(); loadTimeline(true); loadReminders(); loadOnThisDay(); flushQueue();
+    sb.functions.invoke('ai', { body: { action: 'backfill' } }).catch(()=>{}); }
 });
 
 /* ---------- offline ---------- */
@@ -482,7 +483,8 @@ async function flushQueue(){
     q.shift(); ok++;
   }
   setQueue(q);
-  if (ok) { toast(`Synced ${ok} offline ${ok===1?'memory':'memories'}`); loadTimeline(true); }
+  if (ok) { toast(`Synced ${ok} offline ${ok===1?'memory':'memories'}`); loadTimeline(true);
+    sb.functions.invoke('ai', { body: { action: 'backfill' } }).catch(()=>{}); }
 }
 
 /* ---------- tabs ---------- */
@@ -628,6 +630,7 @@ async function runOcr(blob, memId){
     const text = (data.text || '').trim().slice(0, 15000);
     if (text.length > 3) {
       await sb.from('memories').update({ ocr_text: text }).eq('id', memId);
+      sb.functions.invoke('ai', { body: { action: 'embed_memory', id: memId } }).catch(()=>{});
       toast('Photo text saved — it’s searchable now');
     }
   } catch {}
@@ -669,6 +672,7 @@ async function saveMemory(quick){
     if (error) throw error;
     if (!quick) resetCapture();
     toast(quick ? 'Parking spot remembered' : 'Remembered');
+    if (inserted?.id) sb.functions.invoke('ai', { body: { action: 'embed_memory', id: inserted.id } }).catch(()=>{});
     if (blobForOcr && inserted?.id) runOcr(blobForOcr, inserted.id);
   } catch(e){
     if (!navigator.onLine || (e.message||'').includes('Failed to fetch')) {
@@ -794,15 +798,21 @@ async function doSearch(){
   $('dateNote').classList.toggle('hidden', !note);
   if (note) $('dateNote').textContent = 'Filtering to ' + note;
   $('searchResults').innerHTML = '<p class="empty"><span class="spinner"></span></p>';
-  const { data, error } = await sb.rpc('search_memories', {
-    q: cleaned || raw.replace(/[?!.]/g,''),
-    from_ts: from ? from.toISOString() : null,
-    to_ts: to ? to.toISOString() : null,
-  });
-  if (error){ $('searchResults').innerHTML = `<p class="empty">Search failed: ${error.message}</p>`; return; }
-  if (!data?.length){ $('searchResults').innerHTML = '<p class="empty">No memories found.<br>Try fewer words, or a different time range.</p>'; return; }
+  const qText = cleaned || raw.replace(/[?!.]/g,'');
+  const fromIso = from ? from.toISOString() : null;
+  const toIso = to ? to.toISOString() : null;
+  const [kw, sem] = await Promise.all([
+    sb.rpc('search_memories', { q: qText, from_ts: fromIso, to_ts: toIso }),
+    sb.functions.invoke('ai', { body: { action: 'search', q: raw, from_ts: fromIso, to_ts: toIso } }).catch(() => null),
+  ]);
+  if (kw.error && !sem?.data?.matches?.length){
+    $('searchResults').innerHTML = `<p class="empty">Search failed: ${kw.error.message}</p>`; return; }
+  const seen = new Set(); const rows = [];
+  for (const r of (kw.data || [])) if (!seen.has(r.id)) { seen.add(r.id); rows.push(r); }
+  for (const r of (sem?.data?.matches || [])) if (!seen.has(r.id)) { seen.add(r.id); rows.push({ ...r, _sem: true }); }
+  if (!rows.length){ $('searchResults').innerHTML = '<p class="empty">No memories found.<br>Try fewer words, or a different time range.</p>'; return; }
   $('searchResults').innerHTML = '';
-  for (const mrow of data) $('searchResults').appendChild(card(mrow));
+  for (const mrow of rows) $('searchResults').appendChild(card(mrow));
 }
 
 /* ---------- timeline ---------- */
@@ -933,6 +943,7 @@ function card(m){
     <div class="meta">
       <span class="catTag">${m.category}</span>
       <span>${when}</span>
+      ${m._sem ? `<span style="color:var(--gold);letter-spacing:.06em">≈ related</span>` : ''}
       ${m.place_label ? `<span>${I.geo} ${escapeHtml(m.place_label)}</span>` :
         (m.lat!=null ? `<span>${I.geo} <a style="color:var(--silver)" target="_blank" href="https://maps.google.com/?q=${m.lat},${m.lng}">map</a></span>` : '')}
     </div>

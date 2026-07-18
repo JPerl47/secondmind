@@ -371,7 +371,7 @@
     </form>
     <button class="btnGhost" id="authToggle">New here? Create an account</button>
     <p class="authMsg" id="authMsg"></p>
-    <p class="verTag">SECONDMIND · BUILD 17</p>
+    <p class="verTag">SECONDMIND · BUILD 18</p>
   </div>
 </div>
 
@@ -478,7 +478,7 @@
       <h2 class="sect">Gentle <em>reminders</em></h2>
       <p class="hint">Create one from any memory with “Remind me”.</p>
       <div id="remindersList"></div>
-      <p class="verTag">SECONDMIND · BUILD 17</p>
+      <p class="verTag">SECONDMIND · BUILD 18</p>
     </section>
 
   </main>
@@ -945,6 +945,7 @@ $('echoMic').onclick = () => {
   } catch { $('echoInput').focus(); toast('Tap the mic key on your keyboard to dictate'); }
 };
 function goTab(tab){ document.querySelector(`nav.dock button[data-tab="${tab}"]`).click(); }
+function triggerOrb(act){ goTab('capture'); document.querySelector(`.orb[data-act="${act}"]`)?.click(); }
 async function routeEcho(){ routeText($('echoInput').value); }
 async function routeText(raw){
   const t = (raw || '').trim();
@@ -962,6 +963,20 @@ async function routeText(raw){
   if (words <= 5 && /(collections?|library)/.test(l)){ goTab('timeline'); setView('col'); return; }
   if (words <= 5 && /(timeline|history)/.test(l)){ goTab('timeline'); setView('list'); return; }
   if (words <= 5 && /(reminders?|alerts?)/.test(l)){ goTab('reminders'); return; }
+  // "take me to / open / go to <orb>"
+  const navm = l.match(/^(?:take me to|open|go to|start|new)\s+(?:the\s|my\s|a\s)?(.+)$/);
+  if (navm){
+    const k = navm[1];
+    const orb =
+      /(med|pill|medicine)/.test(k) ? 'meds' :
+      /(idea|thought)/.test(k) ? 'idea' :
+      /(receipt|purchase)/.test(k) ? 'receipt' :
+      /(write|note|writing)/.test(k) ? 'write' :
+      /(photo|picture|camera)/.test(k) ? 'photo' :
+      /(speak|voice|dictat)/.test(k) ? 'speak' :
+      /^left\b|(something i left)/.test(k) ? 'left' : null;
+    if (orb){ triggerOrb(orb); return; }
+  }
 
   // let the AI decide the intent
   try {
@@ -974,6 +989,7 @@ async function routeText(raw){
         if (tg === 'map' || tg === 'collections' || tg === 'timeline'){
           goTab('timeline'); setView(tg === 'map' ? 'map' : tg === 'collections' ? 'col' : 'list'); return;
         }
+        if (['write','speak','photo','meds','left','idea','receipt'].includes(tg)){ triggerOrb(tg); return; }
       }
       if (it === 'remember'){ await saveMemory({ content: t, category: autoCat(t) }); return; }
       if (it === 'ask'){ goTab('ask'); $('searchInput').value = t; doSearch(); return; }

@@ -349,6 +349,10 @@
     letter-spacing:.02em;z-index:30;box-shadow:0 16px 44px rgba(0,0,0,.5);
     transition:opacity .3s, transform .3s;opacity:0;pointer-events:none;max-width:88vw;text-align:center}
   #toast.show{opacity:1}
+  #importBadge{position:fixed;top:calc(env(safe-area-inset-top) + 10px);left:50%;
+    transform:translateX(-50%);background:rgba(35,32,20,.92);backdrop-filter:blur(10px);
+    border:1px solid rgba(231,200,140,.4);color:var(--gold);font-size:12px;font-weight:500;
+    letter-spacing:.04em;padding:7px 16px;border-radius:999px;z-index:40}
   #offlineBadge{position:fixed;top:calc(env(safe-area-inset-top) + 10px);left:50%;
     transform:translateX(-50%);background:rgba(74,35,48,.9);backdrop-filter:blur(10px);
     border:1px solid rgba(243,129,129,.3);color:#ffb4b4;font-size:12px;font-weight:500;
@@ -371,7 +375,7 @@
     </form>
     <button class="btnGhost" id="authToggle">New here? Create an account</button>
     <p class="authMsg" id="authMsg"></p>
-    <p class="verTag">SECONDMIND · BUILD 18</p>
+    <p class="verTag">SECONDMIND · BUILD 19</p>
   </div>
 </div>
 
@@ -379,6 +383,7 @@
   <header class="top">
     <div class="brand"><img src="mark.png" alt=""/><span class="wordmark">SecondMind</span></div>
     <div class="hdrBtns">
+      <button class="iconBtn" id="importBtn" title="Import photos from your library"><svg class="i" viewBox="0 0 24 24"><path d="M12 17V5M6 9l6-6 6 6M4 21h16"/></svg></button>
       <button class="iconBtn" id="exportBtn" title="Export my data"><svg class="i" viewBox="0 0 24 24"><path d="M12 3v12M6 11l6 6 6-6M4 21h16"/></svg></button>
       <button class="iconBtn" id="signOutBtn">Sign out</button>
     </div>
@@ -478,7 +483,7 @@
       <h2 class="sect">Gentle <em>reminders</em></h2>
       <p class="hint">Create one from any memory with “Remind me”.</p>
       <div id="remindersList"></div>
-      <p class="verTag">SECONDMIND · BUILD 18</p>
+      <p class="verTag">SECONDMIND · BUILD 19</p>
     </section>
 
   </main>
@@ -516,6 +521,8 @@
 
 <div id="toast"></div>
 <div id="offlineBadge" class="hidden">Offline — captures will sync later</div>
+<div id="importBadge" class="hidden"></div>
+<input type="file" id="importInput" accept="image/*" multiple class="hidden">
 
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -1421,6 +1428,61 @@ async function loadReminders(){
     box.appendChild(el);
   }
 }
+
+/* ---------- bulk photo import ---------- */
+let exifrLib;
+async function ensureExifr(){
+  if (exifrLib !== undefined) return exifrLib;
+  try {
+    await new Promise((res, rej) => {
+      const sc = document.createElement('script');
+      sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/exifr/7.1.3/full.umd.min.js';
+      sc.onload = res; sc.onerror = rej; document.head.appendChild(sc);
+    });
+    exifrLib = window.exifr || null;
+  } catch { exifrLib = null; }
+  return exifrLib;
+}
+$('importBtn').onclick = () => {
+  if (!navigator.onLine) return toast('Importing needs a connection');
+  $('importInput').click();
+};
+$('importInput').onchange = async e => {
+  let files = Array.from(e.target.files || []);
+  if (!files.length) return;
+  if (files.length > 100){ toast('Importing the first 100 — run it again for the rest'); files = files.slice(0, 100); }
+  const badge = $('importBadge');
+  badge.classList.remove('hidden');
+  const ex = await ensureExifr();
+  const { data: { user } } = await sb.auth.getUser();
+  let ok = 0, failed = 0;
+  for (let i = 0; i < files.length; i++){
+    badge.textContent = `Importing ${i + 1} of ${files.length}…`;
+    const f = files[i];
+    try {
+      let meta = null;
+      if (ex) meta = await ex.parse(f, { gps: true }).catch(() => null);
+      let when = meta?.DateTimeOriginal || meta?.CreateDate || new Date(f.lastModified || Date.now());
+      if (!(when instanceof Date) || isNaN(when)) when = new Date();
+      const blob = await compressImage(f);
+      const path = `${user.id}/${Date.now()}_${i}.jpg`;
+      const { error: upErr } = await sb.storage.from('photos').upload(path, blob, { contentType: 'image/jpeg' });
+      if (upErr) throw upErr;
+      const { data: ins, error } = await sb.from('memories').insert({
+        kind: 'photo', content: null, photo_path: path, category: 'other',
+        lat: meta?.latitude ?? null, lng: meta?.longitude ?? null,
+        happened_at: when.toISOString(),
+      }).select('id').single();
+      if (error) throw error;
+      if (ins?.id) sb.functions.invoke('ai', { body: { action: 'describe_photo', id: ins.id } }).catch(()=>{});
+      ok++;
+    } catch { failed++; }
+  }
+  badge.classList.add('hidden');
+  $('importInput').value = '';
+  toast(`Imported ${ok} photo${ok===1?'':'s'}${failed ? ` · ${failed} failed` : ''} — AI is reading them now`);
+  loadTimeline(true);
+};
 
 /* ---------- export ---------- */
 $('exportBtn').onclick = async () => {

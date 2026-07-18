@@ -371,7 +371,7 @@
     </form>
     <button class="btnGhost" id="authToggle">New here? Create an account</button>
     <p class="authMsg" id="authMsg"></p>
-    <p class="verTag">SECONDMIND · BUILD 16</p>
+    <p class="verTag">SECONDMIND · BUILD 17</p>
   </div>
 </div>
 
@@ -478,7 +478,7 @@
       <h2 class="sect">Gentle <em>reminders</em></h2>
       <p class="hint">Create one from any memory with “Remind me”.</p>
       <div id="remindersList"></div>
-      <p class="verTag">SECONDMIND · BUILD 16</p>
+      <p class="verTag">SECONDMIND · BUILD 17</p>
     </section>
 
   </main>
@@ -949,38 +949,42 @@ async function routeEcho(){ routeText($('echoInput').value); }
 async function routeText(raw){
   const t = (raw || '').trim();
   if (!t) return;
-  const l = t.toLowerCase().replace(/[.!]/g,'').trim();
+  closeEcho();
+  toast('Heard: \u201c' + t.slice(0, 60) + '\u201d');
+  const l = t.toLowerCase().replace(/[.!?,]/g,'').trim();
+  const words = l.split(/\s+/).length;
 
-  // navigation commands
-  const navMap = {
-    'show map':'map','map':'map','memory map':'map',
-    'show timeline':'list','timeline':'list','history':'list',
-    'collections':'col','show collections':'col','library':'col',
-    'reminders':'rem','alerts':'rem','show reminders':'rem',
-  };
-  if (navMap[l] !== undefined){
-    closeEcho();
-    if (navMap[l] === 'rem') goTab('reminders');
-    else { goTab('timeline'); setView(navMap[l]); }
-    return;
+  // instant commands (short, unambiguous)
+  if (/(find my car|where.?s my car|where is my car|back to my car|take me to my car)/.test(l) && carSpot){
+    window.open(directionsUrl(carSpot.lat, carSpot.lng, true), '_blank'); return;
   }
-  if (l === 'find my car' || l === 'where is my car' || l === 'wheres my car'){
-    closeEcho();
-    if (carSpot) { window.open(directionsUrl(carSpot.lat, carSpot.lng, true), '_blank'); return; }
-  }
+  if (words <= 5 && /\bmap\b/.test(l)){ goTab('timeline'); setView('map'); return; }
+  if (words <= 5 && /(collections?|library)/.test(l)){ goTab('timeline'); setView('col'); return; }
+  if (words <= 5 && /(timeline|history)/.test(l)){ goTab('timeline'); setView('list'); return; }
+  if (words <= 5 && /(reminders?|alerts?)/.test(l)){ goTab('reminders'); return; }
 
-  // questions → Ask; statements → remember
+  // let the AI decide the intent
+  try {
+    const r = await sb.functions.invoke('ai', { body: { action: 'intent', q: t } });
+    if (r?.data?.enabled && r.data.intent){
+      const it = r.data.intent, tg = r.data.target;
+      if (it === 'navigate'){
+        if (tg === 'findcar' && carSpot){ window.open(directionsUrl(carSpot.lat, carSpot.lng, true), '_blank'); return; }
+        if (tg === 'reminders'){ goTab('reminders'); return; }
+        if (tg === 'map' || tg === 'collections' || tg === 'timeline'){
+          goTab('timeline'); setView(tg === 'map' ? 'map' : tg === 'collections' ? 'col' : 'list'); return;
+        }
+      }
+      if (it === 'remember'){ await saveMemory({ content: t, category: autoCat(t) }); return; }
+      if (it === 'ask'){ goTab('ask'); $('searchInput').value = t; doSearch(); return; }
+    }
+  } catch {}
+
+  // offline / no-AI fallback
   const isQuestion = /\?$/.test(t) ||
-    /^(where|what|whats|when|who|why|how|did|do|does|is|are|was|were|show me|find|search|any)/.test(l);
-  if (isQuestion){
-    closeEcho();
-    goTab('ask');
-    $('searchInput').value = t;
-    doSearch();
-  } else {
-    closeEcho();
-    await saveMemory({ content: t, category: autoCat(t) });
-  }
+    /^(where|what|whats|when|who|why|how|did|do|does|is|are|was|were|show|find|search|any)\b/.test(l);
+  if (isQuestion){ goTab('ask'); $('searchInput').value = t; doSearch(); }
+  else await saveMemory({ content: t, category: autoCat(t) });
 }
 
 /* ---------- find my car ---------- */

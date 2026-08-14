@@ -375,7 +375,7 @@
     </form>
     <button class="btnGhost" id="authToggle">New here? Create an account</button>
     <p class="authMsg" id="authMsg"></p>
-    <p class="verTag">SECONDMIND · BUILD 19</p>
+    <p class="verTag">SECONDMIND · BUILD 20</p>
   </div>
 </div>
 
@@ -483,7 +483,7 @@
       <h2 class="sect">Gentle <em>reminders</em></h2>
       <p class="hint">Create one from any memory with “Remind me”.</p>
       <div id="remindersList"></div>
-      <p class="verTag">SECONDMIND · BUILD 19</p>
+      <p class="verTag">SECONDMIND · BUILD 20</p>
     </section>
 
   </main>
@@ -764,6 +764,15 @@ const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 const STANDALONE = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 let rec = null, recOn = false, voiceFellBack = false;
 
+let micPrimed = false;
+async function primeMic(){
+  if (micPrimed || !navigator.mediaDevices?.getUserMedia) return;
+  try {
+    const st = await navigator.mediaDevices.getUserMedia({ audio: true });
+    st.getTracks().forEach(t => t.stop());
+    micPrimed = true;
+  } catch {}
+}
 function dictationFallback(target){
   voiceFellBack = true;
   if (target === $('memText') && localStorage.getItem('sm_dicthint') !== '0')
@@ -777,9 +786,10 @@ function voiceError(err, target){
   if (err === 'no-speech') { toast('Didn’t catch that — try again'); return; }
   dictationFallback(target);
 }
-$('voiceBtn').onclick = () => {
+$('voiceBtn').onclick = async () => {
   if (recOn){ try { rec.stop(); } catch {} return; }
-  if (!SR || (IS_IOS && STANDALONE) || voiceFellBack) return dictationFallback($('memText'));
+  if (!SR || voiceFellBack) return dictationFallback($('memText'));
+  if (IS_IOS) await primeMic();
   let heard = false;
   try {
     rec = new SR(); rec.lang = navigator.language || 'en-US';
@@ -791,7 +801,6 @@ $('voiceBtn').onclick = () => {
     };
     rec.onend = () => {
       recOn=false; $('voiceBtn').classList.remove('recording'); $('voiceLbl').textContent='Speak';
-      if (IS_IOS && !heard) dictationFallback($('memText'));
     };
     rec.onerror = ev => voiceError(ev.error, $('memText'));
     rec.start(); recOn=true; $('voiceBtn').classList.add('recording'); $('voiceLbl').textContent='Listening…';
@@ -912,9 +921,10 @@ $('saveBtn').onclick = () => saveMemory(null);
 function openEcho(){ $('echoBack').classList.remove('hidden'); setTimeout(() => $('echoInput').focus(), 60); }
 function closeEcho(){ $('echoBack').classList.add('hidden'); $('echoInput').value=''; }
 let echoRec = null, echoListening = false;
-$('echoBtn').onclick = () => {
+$('echoBtn').onclick = async () => {
   if (echoListening){ try { echoRec.stop(); } catch {} return; }
-  if (!SR || (IS_IOS && STANDALONE) || voiceFellBack) return openEcho();
+  if (!SR || voiceFellBack) return openEcho();
+  if (IS_IOS) await primeMic();
   try {
     echoRec = new SR(); echoRec.lang = navigator.language || 'en-US'; echoRec.interimResults = false;
     let got = false;
@@ -940,8 +950,9 @@ $('echoBtn').addEventListener('pointerleave', () => clearTimeout(echoHold));
 $('echoBack').onclick = e => { if (e.target.id === 'echoBack') closeEcho(); };
 $('echoInput').addEventListener('keydown', e => { if (e.key === 'Enter') routeEcho(); });
 $('echoGo').onclick = routeEcho;
-$('echoMic').onclick = () => {
-  if (!SR || (IS_IOS && STANDALONE) || voiceFellBack) { $('echoInput').focus(); toast('Tap the mic key on your keyboard to dictate'); return; }
+$('echoMic').onclick = async () => {
+  if (!SR || voiceFellBack) { $('echoInput').focus(); toast('Tap the mic key on your keyboard to dictate'); return; }
+  if (IS_IOS) await primeMic();
   try {
     const r = new SR(); r.lang = navigator.language || 'en-US'; r.interimResults = false;
     r.onresult = e => { const t = e.results[0][0].transcript; if (t){ $('echoInput').value = t; routeEcho(); } };
@@ -1127,9 +1138,10 @@ function renderAskChips(){
 $('searchBtn').onclick = doSearch;
 $('searchInput').addEventListener('keydown', e => { if (e.key==='Enter') doSearch(); });
 let askRec = null, askRecOn = false;
-$('micBtn').onclick = () => {
+$('micBtn').onclick = async () => {
   if (askRecOn){ try { askRec.stop(); } catch {} return; }
-  if (!SR || (IS_IOS && STANDALONE) || voiceFellBack) return dictationFallback($('searchInput'));
+  if (!SR || voiceFellBack) return dictationFallback($('searchInput'));
+  if (IS_IOS) await primeMic();
   try {
     askRec = new SR(); askRec.lang = navigator.language || 'en-US'; askRec.interimResults=false;
     askRec.onresult = e => {

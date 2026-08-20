@@ -361,6 +361,24 @@
     border-top-color:currentColor;border-radius:50%;animation:spin .8s linear infinite;vertical-align:-3px}
   @keyframes spin{to{transform:rotate(360deg)}}
 
+  /* inline echo answer */
+  #echoAnswer{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(86px + env(safe-area-inset-bottom));
+    width:calc(100% - 32px);max-width:560px;z-index:60;
+    border-radius:19px;padding:19px 21px 15px;
+    border:1px solid transparent;
+    background-image:linear-gradient(168deg,rgba(20,26,48,.97),rgba(13,17,34,.97)),
+      linear-gradient(140deg,rgba(231,200,140,.6),rgba(231,200,140,.18) 45%,rgba(201,211,234,.35));
+    background-origin:border-box;background-clip:padding-box,border-box;
+    box-shadow:0 18px 50px rgba(0,0,0,.55);animation:rise .4s cubic-bezier(.2,.7,.3,1) both}
+  #echoAnswer .aiEyebrow{font-family:'Jost',sans-serif;font-size:10px;font-weight:500;
+    letter-spacing:.3em;text-transform:uppercase;color:var(--gold);margin-bottom:9px}
+  #echoAnswer .aiText{font-family:'Cormorant Garamond',serif;font-size:19.5px;line-height:1.5;color:var(--text)}
+  #echoAnswerClose{position:absolute;top:10px;right:12px;background:none;border:none;color:var(--muted);
+    font-size:20px;line-height:1;cursor:pointer;padding:6px}
+  #echoAnswerMore{margin-top:12px;background:none;border:none;color:var(--goldSoft);cursor:pointer;
+    font-family:'Jost',sans-serif;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;padding:0}
+  #echoAnswerMore:hover{color:var(--gold)}
+
   /* command deck */
   #echoSheet{max-height:84vh;overflow-y:auto}
   .deckHead{margin:20px 2px 10px !important}
@@ -387,7 +405,7 @@
     </form>
     <button class="btnGhost" id="authToggle">New here? Create an account</button>
     <p class="authMsg" id="authMsg"></p>
-    <p class="verTag">SECONDMIND · BUILD 21</p>
+    <p class="verTag">SECONDMIND · BUILD 22</p>
   </div>
 </div>
 
@@ -495,7 +513,7 @@
       <h2 class="sect">Gentle <em>reminders</em></h2>
       <p class="hint">Create one from any memory with “Remind me”.</p>
       <div id="remindersList"></div>
-      <p class="verTag">SECONDMIND · BUILD 21</p>
+      <p class="verTag">SECONDMIND · BUILD 22</p>
     </section>
 
   </main>
@@ -539,6 +557,13 @@
       <button class="deckBtn" data-deck="car:go"><svg class="i" viewBox="0 0 24 24"><path d="M12 2 19 21l-7-4-7 4 7-19z"/></svg>My car</button>
     </div>
   </div>
+</div>
+
+<div id="echoAnswer" class="hidden">
+  <button id="echoAnswerClose" aria-label="Close">×</button>
+  <div class="aiEyebrow">Your memory says</div>
+  <div class="aiText" id="echoAnswerBody"></div>
+  <button id="echoAnswerMore">See matching memories →</button>
 </div>
 
 <div id="modalBack" class="hidden">
@@ -1012,6 +1037,25 @@ $('echoMic').onclick = async () => {
 };
 function goTab(tab){ document.querySelector(`nav.dock button[data-tab="${tab}"]`).click(); }
 function triggerOrb(act){ goTab('capture'); document.querySelector(`.orb[data-act="${act}"]`)?.click(); }
+let inlineSeq = 0;
+function hideEchoAnswer(){ $('echoAnswer').classList.add('hidden'); $('echoAnswerBody').textContent=''; }
+$('echoAnswerClose').onclick = hideEchoAnswer;
+function goAskWith(q){ hideEchoAnswer(); goTab('ask'); $('searchInput').value = q; doSearch(); }
+async function answerInline(q){
+  const seq = ++inlineSeq;
+  const { from, to } = parseDates(q);
+  const fromIso = from ? from.toISOString() : null;
+  const toIso = to ? to.toISOString() : null;
+  $('echoAnswer').classList.remove('hidden');
+  $('echoAnswerBody').innerHTML = '<span class="spinner"></span>';
+  $('echoAnswerMore').onclick = () => goAskWith(q);
+  try {
+    const r = await sb.functions.invoke('ai', { body: { action: 'answer', q, from_ts: fromIso, to_ts: toIso } });
+    if (seq !== inlineSeq) return;
+    if (r?.data?.enabled && r?.data?.answer) $('echoAnswerBody').textContent = r.data.answer;
+    else goAskWith(q);
+  } catch { if (seq === inlineSeq) goAskWith(q); }
+}
 async function routeEcho(){ routeText($('echoInput').value); }
 async function routeText(raw){
   const t = (raw || '').trim();
@@ -1058,14 +1102,14 @@ async function routeText(raw){
         if (['write','speak','photo','meds','left','idea','receipt'].includes(tg)){ triggerOrb(tg); return; }
       }
       if (it === 'remember'){ await saveMemory({ content: t, category: autoCat(t) }); return; }
-      if (it === 'ask'){ goTab('ask'); $('searchInput').value = t; doSearch(); return; }
+      if (it === 'ask'){ answerInline(t); return; }
     }
   } catch {}
 
   // offline / no-AI fallback
   const isQuestion = /\?$/.test(t) ||
     /^(where|what|whats|when|who|why|how|did|do|does|is|are|was|were|show|find|search|any)\b/.test(l);
-  if (isQuestion){ goTab('ask'); $('searchInput').value = t; doSearch(); }
+  if (isQuestion){ answerInline(t); }
   else await saveMemory({ content: t, category: autoCat(t) });
 }
 

@@ -360,6 +360,18 @@
   .spinner{display:inline-block;width:15px;height:15px;border:2px solid rgba(127,132,156,.35);
     border-top-color:currentColor;border-radius:50%;animation:spin .8s linear infinite;vertical-align:-3px}
   @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* command deck */
+  #echoSheet{max-height:84vh;overflow-y:auto}
+  .deckHead{margin:20px 2px 10px !important}
+  .deckGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+  .deckBtn{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 4px 10px;
+    border-radius:14px;border:1px solid var(--border2);background-color:transparent;
+    background:rgba(255,255,255,.03);color:var(--muted);font-family:'Jost',sans-serif;
+    font-size:9px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;
+    transition:background .2s,border-color .2s,color .2s}
+  .deckBtn svg.i{width:19px;height:19px;color:var(--gold)}
+  .deckBtn:hover,.deckBtn:active{background:rgba(231,200,140,.08);border-color:rgba(231,200,140,.35);color:var(--text)}
 </style>
 </head>
 <body>
@@ -375,7 +387,7 @@
     </form>
     <button class="btnGhost" id="authToggle">New here? Create an account</button>
     <p class="authMsg" id="authMsg"></p>
-    <p class="verTag">SECONDMIND · BUILD 20</p>
+    <p class="verTag">SECONDMIND · BUILD 21</p>
   </div>
 </div>
 
@@ -483,7 +495,7 @@
       <h2 class="sect">Gentle <em>reminders</em></h2>
       <p class="hint">Create one from any memory with “Remind me”.</p>
       <div id="remindersList"></div>
-      <p class="verTag">SECONDMIND · BUILD 20</p>
+      <p class="verTag">SECONDMIND · BUILD 21</p>
     </section>
 
   </main>
@@ -506,6 +518,26 @@
       <button class="sq primary" id="echoGo"><svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
     </div>
     <p class="hint" style="margin:12px 2px 0">Questions get answers · thoughts get remembered · try “show map” or “find my car”</p>
+    <div class="eyebrow deckHead">Capture</div>
+    <div class="deckGrid">
+      <button class="deckBtn" data-deck="orb:write"><svg class="i" viewBox="0 0 24 24"><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1z"/><path d="m14 6 3 3"/></svg>Write</button>
+      <button class="deckBtn" data-deck="orb:speak"><svg class="i" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Speak</button>
+      <button class="deckBtn" data-deck="orb:photo"><svg class="i" viewBox="0 0 24 24"><path d="M7 7l2-3h6l2 3h3a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h3z"/><circle cx="12" cy="14" r="4"/></svg>Photo</button>
+      <button class="deckBtn" data-deck="orb:park"><svg class="i" viewBox="0 0 24 24"><path d="M12 21s-7-5.1-7-11a7 7 0 0 1 14 0c0 5.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Parked</button>
+      <button class="deckBtn" data-deck="orb:meds"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="9" width="18" height="7" rx="3.5" transform="rotate(-40 12 12.5)"/><path d="m9 8.5 6.5 5.5"/></svg>Meds</button>
+      <button class="deckBtn" data-deck="orb:left"><svg class="i" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3m-4 1 3 3m-6 0 2 2"/></svg>I left…</button>
+      <button class="deckBtn" data-deck="orb:idea"><svg class="i" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.7.5 1 1.3 1 2.1h5c0-.8.3-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>Idea</button>
+      <button class="deckBtn" data-deck="orb:receipt"><svg class="i" viewBox="0 0 24 24"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2V2z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>Receipt</button>
+    </div>
+    <div class="eyebrow deckHead">Go to</div>
+    <div class="deckGrid">
+      <button class="deckBtn" data-deck="tab:ask"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4.5 4.5"/></svg>Ask</button>
+      <button class="deckBtn" data-deck="view:list"><svg class="i" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>Memories</button>
+      <button class="deckBtn" data-deck="view:col"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></svg>Collections</button>
+      <button class="deckBtn" data-deck="view:map"><svg class="i" viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/></svg>Map</button>
+      <button class="deckBtn" data-deck="tab:reminders"><svg class="i" viewBox="0 0 24 24"><path d="M18 9a6 6 0 1 0-12 0c0 6.2-2.5 7.5-2.5 7.5h17S18 15.2 18 9zM10.3 20.5a2 2 0 0 0 3.4 0"/></svg>Alerts</button>
+      <button class="deckBtn" data-deck="car:go"><svg class="i" viewBox="0 0 24 24"><path d="M12 2 19 21l-7-4-7 4 7-19z"/></svg>My car</button>
+    </div>
   </div>
 </div>
 
@@ -622,7 +654,8 @@ function bindAuthState(){
     $('authView').classList.toggle('hidden', authed);
     $('appView').classList.toggle('hidden', !authed);
     if (authed) { initCapture(); loadTimeline(true); loadReminders(); loadOnThisDay(); flushQueue(); loadFindCar();
-      sb.functions.invoke('ai', { body: { action: 'backfill' } }).catch(()=>{}); }
+      sb.functions.invoke('ai', { body: { action: 'backfill' } }).catch(()=>{});
+      setTimeout(() => sb.functions.invoke('ai', { body: { action: 'search', q: 'warm up', limit: 1 } }).catch(()=>{}), 2500); }
   });
 }
 bindAuthState();
@@ -645,7 +678,7 @@ async function flushQueue(){
     q.shift(); ok++;
   }
   setQueue(q);
-  if (ok) { toast(`Synced ${ok} offline ${ok===1?'memory':'memories'}`); loadTimeline(true);
+  if (ok) { toast(`Synced ${ok} offline ${ok===1?'memory':'memories'}`); tlDirty = true; loadTimeline(true);
     sb.functions.invoke('ai', { body: { action: 'backfill' } }).catch(()=>{}); }
 }
 
@@ -654,7 +687,11 @@ document.querySelectorAll('nav.dock button').forEach(b => b.onclick = () => {
   document.querySelectorAll('nav.dock button').forEach(x=>x.classList.toggle('active', x===b));
   ['capture','ask','timeline','reminders'].forEach(t =>
     $('tab-'+t).classList.toggle('hidden', t !== b.dataset.tab));
-  if (b.dataset.tab==='timeline') loadTimeline(true);
+  if (b.dataset.tab==='timeline'){
+    if (tlView === 'map') renderMap();
+    else if (tlView === 'col') loadCollections();
+    else if (tlCat !== null || tlDirty || Date.now() - tlLoadedAt > 60000) loadTimeline(true);
+  }
   if (b.dataset.tab==='reminders') loadReminders();
   if (b.dataset.tab==='ask') { renderAskChips(); $('searchInput').focus(); }
 });
@@ -890,6 +927,7 @@ async function saveMemory(quick){
     if (error) throw error;
     if (!quick) resetCapture();
     toast(quick ? 'Parking spot remembered' : 'Remembered');
+    tlDirty = true;
     loadFindCar();
     if (inserted?.id) sb.functions.invoke('ai', { body: { action: 'embed_memory', id: inserted.id } }).catch(()=>{});
     if (blobForOcr && inserted?.id) {
@@ -950,6 +988,16 @@ $('echoBtn').addEventListener('pointerleave', () => clearTimeout(echoHold));
 $('echoBack').onclick = e => { if (e.target.id === 'echoBack') closeEcho(); };
 $('echoInput').addEventListener('keydown', e => { if (e.key === 'Enter') routeEcho(); });
 $('echoGo').onclick = routeEcho;
+document.querySelectorAll('#echoSheet [data-deck]').forEach(b => b.onclick = () => {
+  const [kind, val] = b.dataset.deck.split(':');
+  closeEcho();
+  if (kind === 'orb') triggerOrb(val);
+  else if (kind === 'tab') goTab(val);
+  else if (kind === 'view') { goTab('timeline'); setView(val); }
+  else if (kind === 'car') {
+    carSpot ? window.open(directionsUrl(carSpot.lat, carSpot.lng, true), '_blank') : toast('No parking spot saved yet');
+  }
+});
 $('echoMic').onclick = async () => {
   if (!SR || voiceFellBack) { $('echoInput').focus(); toast('Tap the mic key on your keyboard to dictate'); return; }
   if (IS_IOS) await primeMic();
@@ -1203,6 +1251,7 @@ async function askForAnswer(q, fromIso, toIso){
 
 /* ---------- timeline ---------- */
 let tlOffset = 0, tlCat = null, tlView = 'list', pinnedShown = false;
+let tlDirty = true, tlLoadedAt = 0;
 const PAGE_SIZE = 40;
 function buildFilterRow(){
   const box = $('filterRow'); box.innerHTML='';
@@ -1292,6 +1341,7 @@ async function loadTimeline(reset){
   }
   $('timelineList').dataset.lastDay = lastDay;
   tlOffset += data.length;
+  if (tlCat === null && tlView === 'list'){ tlLoadedAt = Date.now(); tlDirty = false; }
   $('moreBtn').classList.toggle('hidden', data.length < PAGE_SIZE || tlView==='map');
 }
 $('moreBtn').onclick = () => loadTimeline(false);
@@ -1382,6 +1432,7 @@ function card(m){
     pinBtn.classList.toggle('pinned', newVal);
     el.classList.toggle('pinnedCard', newVal);
     toast(newVal ? 'Pinned' : 'Unpinned');
+    tlDirty = true;
     loadPinned();
   };
   el.querySelector('.actRemind').onclick = () => openReminderModal(m);
@@ -1392,7 +1443,7 @@ function card(m){
     const { error } = await sb.from('memories').delete().eq('id', m.id);
     if (error){ el.style.opacity=1; return toast(error.message); }
     if (m.photo_path) sb.storage.from('photos').remove([m.photo_path]);
-    el.remove(); toast('Deleted');
+    el.remove(); tlDirty = true; toast('Deleted');
   };
   return el;
 }

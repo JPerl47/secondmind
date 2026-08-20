@@ -362,14 +362,15 @@
   @keyframes spin{to{transform:rotate(360deg)}}
 
   /* inline echo answer */
-  #echoAnswer{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(86px + env(safe-area-inset-bottom));
+  @keyframes riseC{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
+  #echoAnswer{position:fixed;left:50%;transform:translate(-50%,0);bottom:calc(86px + env(safe-area-inset-bottom));
     width:calc(100% - 32px);max-width:560px;z-index:60;
     border-radius:19px;padding:19px 21px 15px;
     border:1px solid transparent;
     background-image:linear-gradient(168deg,rgba(20,26,48,.97),rgba(13,17,34,.97)),
       linear-gradient(140deg,rgba(231,200,140,.6),rgba(231,200,140,.18) 45%,rgba(201,211,234,.35));
     background-origin:border-box;background-clip:padding-box,border-box;
-    box-shadow:0 18px 50px rgba(0,0,0,.55);animation:rise .4s cubic-bezier(.2,.7,.3,1) both}
+    box-shadow:0 18px 50px rgba(0,0,0,.55);animation:riseC .4s cubic-bezier(.2,.7,.3,1) both}
   #echoAnswer .aiEyebrow{font-family:'Jost',sans-serif;font-size:10px;font-weight:500;
     letter-spacing:.3em;text-transform:uppercase;color:var(--gold);margin-bottom:9px}
   #echoAnswer .aiText{font-family:'Cormorant Garamond',serif;font-size:19.5px;line-height:1.5;color:var(--text)}

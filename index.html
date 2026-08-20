@@ -405,7 +405,7 @@
     </form>
     <button class="btnGhost" id="authToggle">New here? Create an account</button>
     <p class="authMsg" id="authMsg"></p>
-    <p class="verTag">SECONDMIND · BUILD 22</p>
+    <p class="verTag">SECONDMIND · BUILD 23</p>
   </div>
 </div>
 
@@ -513,7 +513,7 @@
       <h2 class="sect">Gentle <em>reminders</em></h2>
       <p class="hint">Create one from any memory with “Remind me”.</p>
       <div id="remindersList"></div>
-      <p class="verTag">SECONDMIND · BUILD 22</p>
+      <p class="verTag">SECONDMIND · BUILD 23</p>
     </section>
 
   </main>
@@ -1037,6 +1037,7 @@ $('echoMic').onclick = async () => {
 };
 function goTab(tab){ document.querySelector(`nav.dock button[data-tab="${tab}"]`).click(); }
 function triggerOrb(act){ goTab('capture'); document.querySelector(`.orb[data-act="${act}"]`)?.click(); }
+function plainText(t){ return (t||'').replace(/\*\*/g,'').replace(/(^|\s)\*(\S[^*]*\S)\*(?=\s|$)/g,'$1$2').replace(/^#+\s+/gm,''); }
 let inlineSeq = 0;
 function hideEchoAnswer(){ $('echoAnswer').classList.add('hidden'); $('echoAnswerBody').textContent=''; }
 $('echoAnswerClose').onclick = hideEchoAnswer;
@@ -1052,7 +1053,7 @@ async function answerInline(q){
   try {
     const r = await sb.functions.invoke('ai', { body: { action: 'answer', q, from_ts: fromIso, to_ts: toIso } });
     if (seq !== inlineSeq) return;
-    if (r?.data?.enabled && r?.data?.answer) $('echoAnswerBody').textContent = r.data.answer;
+    if (r?.data?.enabled && r?.data?.answer) $('echoAnswerBody').textContent = plainText(r.data.answer);
     else goAskWith(q);
   } catch { if (seq === inlineSeq) goAskWith(q); }
 }
@@ -1289,7 +1290,7 @@ async function askForAnswer(q, fromIso, toIso){
     if (seq !== answerSeq) return;
     if (!r?.data?.enabled || !r?.data?.answer) { box.classList.add('hidden'); box.innerHTML=''; return; }
     box.innerHTML = '<div class="aiEyebrow">Your memory says</div><div class="aiText"></div>';
-    box.querySelector('.aiText').textContent = r.data.answer;
+    box.querySelector('.aiText').textContent = plainText(r.data.answer);
   } catch { if (seq === answerSeq) { box.classList.add('hidden'); box.innerHTML=''; } }
 }
 

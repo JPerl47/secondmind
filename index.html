@@ -421,7 +421,7 @@
     </form>
     <button class="btnGhost" id="authToggle">New here? Create an account</button>
     <p class="authMsg" id="authMsg"></p>
-    <p class="verTag">SECONDMIND · BUILD 25</p>
+    <p class="verTag">SECONDMIND · BUILD 26</p>
   </div>
 </div>
 
@@ -513,19 +513,19 @@
     <section id="tab-timeline" class="hidden">
       <h2 class="sect">Your <em>memories</em></h2>
       <div class="viewToggle">
-        <button class="iconBtn on" id="listViewBtn"><svg class="i" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>List</button>
-        <button class="iconBtn" id="colViewBtn"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></svg>Collections</button>
+        <button class="iconBtn" id="listViewBtn"><svg class="i" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>List</button>
+        <button class="iconBtn on" id="colViewBtn"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></svg>Collections</button>
         <button class="iconBtn" id="mapViewBtn"><svg class="i" viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/></svg>Map</button>
       </div>
-      <div class="filterRow" id="filterRow"></div>
-      <div id="colGrid" class="colGrid hidden"></div>
+      <div class="filterRow hidden" id="filterRow"></div>
+      <div id="colGrid" class="colGrid"></div>
       <div id="mapWrap" class="hidden"></div>
       <div id="pinnedWrap" class="hidden">
         <div class="eyebrow">Pinned</div>
         <div id="pinnedList"></div>
         <div class="eyebrow">Everything</div>
       </div>
-      <div id="timelineList"></div>
+      <div id="timelineList" class="hidden"></div>
       <button class="btnGhost hidden" id="moreBtn">Load more</button>
     </section>
 
@@ -534,7 +534,7 @@
       <h2 class="sect">Gentle <em>reminders</em></h2>
       <p class="hint">Create one from any memory with “Remind me”.</p>
       <div id="remindersList"></div>
-      <p class="verTag">SECONDMIND · BUILD 25</p>
+      <p class="verTag">SECONDMIND · BUILD 26</p>
     </section>
 
   </main>
@@ -631,19 +631,26 @@ const I = {
 
 /* ---------- categories ---------- */
 const CATS = {
-  parking:'🅿️', food:'🍽️', recommendation:'💡', purchase:'🧾', maintenance:'🔧',
-  health:'💊', travel:'✈️', people:'👥', home:'🏠', idea:'💭', other:'📌'
+  parking:'🅿️', receipt:'🧾', meds:'💊', idea:'💭', left:'🔑', people:'👥',
+  food:'🍽️', travel:'✈️', recommendation:'💡', maintenance:'🔧', home:'🏠', other:'📌'
 };
+const CAT_LABEL = {
+  parking:'Parked', receipt:'Receipts', meds:'Meds', idea:'Ideas', left:'I left…',
+  people:'People', food:'Food', travel:'Travel', recommendation:'Tips',
+  maintenance:'Maintenance', home:'Home', other:'Other'
+};
+function catLabel(c){ return CAT_LABEL[c] || (c ? c[0].toUpperCase() + c.slice(1) : 'Other'); }
 const CAT_WORDS = [
   ['parking',['parked','parking','garage','lot ',' lot','level ','row ','spot','space ']],
   ['maintenance',['battery','oil change','tire','filter','replaced','replace','repair','fixed','service','maintenance','furnace','hvac','leak','plumber']],
   ['recommendation',['recommend','suggested','suggest','check out','should try','worth trying','must see']],
   ['food',['restaurant','cafe','café','coffee','ate ','dinner','lunch','brunch','pizza','sushi','taco','ramen','bakery','food']],
-  ['purchase',['bought','purchase','receipt','paid','ordered','order ','$','cost','price','warranty','returned']],
-  ['health',['doctor','dentist','appointment','prescription','medication','vaccine','dose','allerg','pharmacy','took my']],
+  ['receipt',['bought','purchase','receipt','paid','ordered','order ','$','cost','price','warranty','returned']],
+  ['meds',['doctor','dentist','appointment','prescription','medication','vaccine','dose','allerg','pharmacy','took my']],
   ['travel',['flight','hotel','airbnb','airport','gate ','trip','vacation','passport']],
   ['people',['met ','birthday','anniversary','name is','phone number','moved to']],
-  ['home',['wifi','router','paint','model number','serial','thermostat','breaker','garage code','left my','left the']],
+  ['left',['left my','left the','i left']],
+  ['home',['wifi','router','paint','model number','serial','thermostat','breaker','garage code']],
   ['idea',['idea','maybe i should','what if','someday','todo']],
 ];
 function autoCat(text){
@@ -809,10 +816,10 @@ document.querySelectorAll('.orb').forEach(b => b.onclick = async () => {
     write:   { text: '', cat: null, caret: 0 },
     speak:   { text: '', cat: null, caret: 0 },
     photo:   { text: '', cat: null, caret: 0 },
-    left:    { text: 'I left  at ', cat: 'home', caret: 7 },
-    meds:    { text: 'Took medication', cat: 'health', caret: 15 },
+    left:    { text: 'I left  at ', cat: 'left', caret: 7 },
+    meds:    { text: 'Took medication', cat: 'meds', caret: 15 },
     idea:    { text: 'Idea: ', cat: 'idea', caret: 6 },
-    receipt: { text: 'Bought ', cat: 'purchase', caret: 7 },
+    receipt: { text: 'Bought ', cat: 'receipt', caret: 7 },
     person:  { text: 'Met ', cat: 'people', caret: 4 },
   };
   const p = presets[act];
@@ -828,7 +835,7 @@ function buildCatChips(){
   const box = $('catChips'); box.innerHTML='';
   Object.entries(CATS).forEach(([cat, emo]) => {
     const b = document.createElement('button');
-    b.className='chip cat'; b.textContent = cat; b.dataset.cat = cat;
+    b.className='chip cat'; b.textContent = catLabel(cat); b.dataset.cat = cat;
     b.onclick = () => { chosenCat = (chosenCat===cat) ? null : cat; paintCatChips(); };
     box.appendChild(b);
   });
@@ -972,7 +979,7 @@ async function saveMemory(quick){
     const { data: inserted, error } = await sb.from('memories').insert(row).select('id').single();
     if (error) throw error;
     if (!quick) resetCapture();
-    toast(quick ? 'Parking spot remembered' : 'Remembered');
+    toast(quick ? 'Parking spot remembered' : 'Saved to ' + catLabel(row.category));
     tlDirty = true;
     loadFindCar();
     if (inserted?.id) sb.functions.invoke('ai', { body: { action: 'embed_memory', id: inserted.id } }).catch(()=>{});
@@ -1318,7 +1325,7 @@ async function askForAnswer(q, fromIso, toIso){
 }
 
 /* ---------- timeline ---------- */
-let tlOffset = 0, tlCat = null, tlView = 'list', pinnedShown = false;
+let tlOffset = 0, tlCat = null, tlView = 'col', pinnedShown = false;
 let tlDirty = true, tlLoadedAt = 0;
 const PAGE_SIZE = 40;
 function buildFilterRow(){
@@ -1329,7 +1336,7 @@ function buildFilterRow(){
   box.appendChild(all);
   Object.entries(CATS).forEach(([cat, emo]) => {
     const b = document.createElement('button');
-    b.className = 'chip cat' + (tlCat===cat?' on':''); b.textContent = cat;
+    b.className = 'chip cat' + (tlCat===cat?' on':''); b.textContent = catLabel(cat);
     b.onclick = () => { tlCat = (tlCat===cat)?null:cat; tlView==='map' ? (buildFilterRow(), renderMap()) : loadTimeline(true); };
     box.appendChild(b);
   });
@@ -1368,7 +1375,7 @@ async function loadCollections(){
         <span><span class="cName"></span><span class="cCount" style="display:block"></span></span></span>
       <span class="cSample"></span>`;
     el.querySelector('.mono').textContent = (c.category || '?')[0].toUpperCase();
-    el.querySelector('.cName').textContent = c.category;
+    el.querySelector('.cName').textContent = catLabel(c.category);
     el.querySelector('.cCount').textContent =
       c.n + (c.n == 1 ? ' memory' : ' memories') + ' · ' + timeAgo(c.latest);
     el.querySelector('.cSample').textContent = c.sample || '';
@@ -1475,7 +1482,7 @@ function card(m){
     ${m.photo_path ? `<img class="mem" alt="memory photo">` : ''}
     ${(m.ai_caption || m.ocr_text) ? `<div class="ocr"></div>` : ''}
     <div class="meta">
-      <span class="catTag">${m.category}</span>
+      <span class="catTag">${catLabel(m.category)}</span>
       <span>${when}</span>
       ${m._sem ? `<span style="color:var(--gold);letter-spacing:.06em">≈ related</span>` : ''}
       ${m.place_label ? `<span>${I.geo} ${escapeHtml(m.place_label)}</span>` :

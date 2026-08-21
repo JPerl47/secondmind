@@ -421,7 +421,7 @@
     </form>
     <button class="btnGhost" id="authToggle">New here? Create an account</button>
     <p class="authMsg" id="authMsg"></p>
-    <p class="verTag">SECONDMIND · BUILD 24</p>
+    <p class="verTag">SECONDMIND · BUILD 25</p>
   </div>
 </div>
 
@@ -534,7 +534,7 @@
       <h2 class="sect">Gentle <em>reminders</em></h2>
       <p class="hint">Create one from any memory with “Remind me”.</p>
       <div id="remindersList"></div>
-      <p class="verTag">SECONDMIND · BUILD 24</p>
+      <p class="verTag">SECONDMIND · BUILD 25</p>
     </section>
 
   </main>
@@ -1005,10 +1005,9 @@ $('saveBtn').onclick = () => saveMemory(null);
 function openEcho(){ $('echoBack').classList.remove('hidden'); setTimeout(() => $('echoInput').focus(), 60); }
 function closeEcho(){ $('echoBack').classList.add('hidden'); $('echoInput').value=''; }
 let echoRec = null, echoListening = false;
-$('echoBtn').onclick = async () => {
+$('echoBtn').onclick = () => {
   if (echoListening){ try { echoRec.stop(); } catch {} return; }
-  if (!SR || voiceFellBack) return openEcho();
-  if (IS_IOS) await primeMic();
+  if (!SR) return openEcho();
   try {
     echoRec = new SR(); echoRec.lang = navigator.language || 'en-US'; echoRec.interimResults = false;
     let got = false;
@@ -1019,11 +1018,14 @@ $('echoBtn').onclick = async () => {
       if (t){ got = true; routeText(t); }
     };
     echoRec.onend = () => { echoListening = false; $('echoBtn').classList.remove('listening');
-      if (!got) toast('Didn’t catch that — tap the echo again, or hold it for typing'); };
-    echoRec.onerror = ev => { echoListening = false; $('echoBtn').classList.remove('listening');
-      if (ev.error !== 'no-speech') openEcho(); };
+      if (!got){ got = true; toast('Didn’t catch that — tap the echo and try again'); } };
+    echoRec.onerror = ev => { echoListening = false; got = true; $('echoBtn').classList.remove('listening');
+      if (ev.error === 'no-speech') toast('Didn’t catch that — tap the echo and try again');
+      else if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed'){
+        primeMic(); toast('Allow microphone access, then tap the echo again'); }
+      else toast('Voice isn’t available right now — hold the echo to type instead'); };
     echoRec.start();
-  } catch { openEcho(); }
+  } catch { toast('Voice isn’t available right now — hold the echo to type instead'); }
 };
 let echoHold = null;
 $('echoBtn').addEventListener('pointerdown', () => {

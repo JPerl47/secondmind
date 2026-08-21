@@ -190,6 +190,22 @@
   /* Radial hub */
   .hubTitle{text-align:center}
   .hubSub{text-align:center;color:var(--muted);font-size:12.5px;letter-spacing:.03em;margin:-16px 2px 6px}
+  .metaLine{font-family:'Jost',sans-serif;font-size:12px;font-weight:500;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--gold);margin-bottom:9px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .metaLine .due{background:rgba(231,200,140,.12);border:1px solid rgba(231,200,140,.3);
+    border-radius:8px;padding:2px 9px;font-size:10px}
+  .card.resolved{opacity:.55}
+  .card img.mem{cursor:zoom-in}
+  #lightbox{position:fixed;inset:0;z-index:80;background:rgba(4,6,12,.96);
+    display:flex;flex-direction:column;padding:calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 16px)}
+  #lightbox.hidden{display:none}
+  #lightbox img{max-width:100%;max-height:62vh;object-fit:contain;border-radius:14px;margin:0 auto}
+  #lightboxText{overflow-y:auto;margin-top:16px;color:var(--text);font-size:14.5px;line-height:1.65;white-space:pre-wrap}
+  #lightboxClose{position:absolute;top:calc(env(safe-area-inset-top) + 10px);right:14px;background:rgba(255,255,255,.08);
+    border:none;color:var(--text);font-size:22px;line-height:1;border-radius:50%;width:40px;height:40px;cursor:pointer}
+  .pChips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 14px}
+  .areaSum{font-family:'Jost',sans-serif;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--goldSoft);margin:2px 2px 14px}
   #pushCard{border-radius:17px;padding:17px 19px;margin:0 0 18px;border:1px solid transparent;
     background-image:linear-gradient(168deg,rgba(231,200,140,.10),rgba(255,255,255,.02)),
       linear-gradient(140deg,rgba(231,200,140,.5),rgba(231,200,140,.15) 45%,rgba(201,211,234,.3));
@@ -429,7 +445,7 @@
     </form>
     <button class="btnGhost" id="authToggle">New here? Create an account</button>
     <p class="authMsg" id="authMsg"></p>
-    <p class="verTag">SECONDMIND · BUILD 29</p>
+    <p class="verTag">SECONDMIND · BUILD 30</p>
   </div>
 </div>
 
@@ -551,7 +567,7 @@
       <p class="hint">Create one from any memory with “Remind me”, or start fresh.</p>
       <button class="btnGhost" id="newRemBtn" style="margin:4px 0 16px">+ New reminder</button>
       <div id="remindersList"></div>
-      <p class="verTag">SECONDMIND · BUILD 29</p>
+      <p class="verTag">SECONDMIND · BUILD 30</p>
     </section>
 
   </main>
@@ -591,6 +607,12 @@
       <button class="deckBtn" data-deck="car:go"><svg class="i" viewBox="0 0 24 24"><path d="M12 2 19 21l-7-4-7 4 7-19z"/></svg>My car</button>
     </div>
   </div>
+</div>
+
+<div id="lightbox" class="hidden">
+  <button id="lightboxClose" aria-label="Close">×</button>
+  <img id="lightboxImg" alt="memory photo">
+  <div id="lightboxText"></div>
 </div>
 
 <div id="echoAnswer" class="hidden">
@@ -748,6 +770,7 @@ function bindAuthState(){
     migrateLegacyQueue();
     initCapture(); loadTimeline(true); loadReminders(); loadOnThisDay(); flushQueue(); loadFindCar();
     setTimeout(resyncPush, 1200);
+    setTimeout(() => sb.functions.invoke('ai', { body: { action: 'backfill_meta' } }).catch(()=>{}), 5000);
     sb.functions.invoke('ai', { body: { action: 'backfill' } }).catch(()=>{});
     setTimeout(() => sb.functions.invoke('ai', { body: { action: 'search', q: 'warm up', limit: 1 } }).catch(()=>{}), 2500);
   });
@@ -1066,6 +1089,19 @@ async function saveMemory(quick){
   const thePhoto = (!quick && photoFile) ? photoFile : null;
   let row = null;
   try {
+    if (editingId && !quick){
+      const upd = { content: text || null, category: chosenCat || autoCat(text) };
+      if (!$('whenWrap').classList.contains('hidden') && $('whenInput').value)
+        upd.happened_at = new Date($('whenInput').value).toISOString();
+      const id = editingId;
+      const { error } = await sb.from('memories').update(upd).eq('id', id);
+      if (error) throw error;
+      resetCapture();
+      toast('Updated');
+      tlDirty = true;
+      sb.functions.invoke('ai', { body: { action: 'embed_memory', id } }).catch(()=>{});
+      return;
+    }
     const category = quick ? quick.category : (chosenCat || autoCat(text));
     if (category === 'parking' && navigator.onLine && Date.now() - lastFixAt > 15000){
       const fix = await freshFix();
@@ -1127,8 +1163,32 @@ function resetCapture(){
   $('memText').value=''; photoFile=null; $('photoPreview').classList.add('hidden'); $('photoInput').value='';
   chosenCat=null; memKind='note'; paintCatChips();
   $('whenWrap').classList.add('hidden'); $('whenChip').classList.remove('on'); $('whenInput').value='';
+  editingId = null; $('saveBtn').textContent = 'Save memory';
   closeComposer();
 }
+let editingId = null;
+function startEdit(m){
+  goTab('capture');
+  openComposer();
+  editingId = m.id;
+  $('memText').value = m.content || '';
+  chosenCat = m.category || null;
+  paintCatChips();
+  photoFile = null; $('photoPreview').classList.add('hidden'); $('photoInput').value = '';
+  $('saveBtn').textContent = 'Save changes';
+  $('memText').focus();
+}
+function openLightbox(m, src){
+  $('lightboxImg').src = src;
+  const parts = [];
+  if (m.content) parts.push(m.content);
+  if (m.ai_caption) parts.push(m.ai_caption);
+  if (m.ocr_text) parts.push('— Text found in photo —\n' + m.ocr_text);
+  $('lightboxText').textContent = parts.join('\n\n');
+  $('lightbox').classList.remove('hidden');
+}
+$('lightboxClose').onclick = () => $('lightbox').classList.add('hidden');
+$('lightbox').onclick = e => { if (e.target.id === 'lightbox') $('lightbox').classList.add('hidden'); };
 $('saveBtn').onclick = () => saveMemory(null);
 
 /* ---------- the echo: one AI entry to everything ---------- */
@@ -1628,11 +1688,45 @@ async function loadTimeline(reset){
     $('timelineList').appendChild(card(mrow));
   }
   $('timelineList').dataset.lastDay = lastDay;
+  if (reset) renderAreaExtras(data);
   tlOffset += data.length;
   if (tlCat === null && tlKind === null && tlView === 'list'){ tlLoadedAt = Date.now(); tlDirty = false; }
   $('moreBtn').classList.toggle('hidden', data.length < PAGE_SIZE || tlView==='map');
 }
 $('moreBtn').onclick = () => loadTimeline(false);
+function renderAreaExtras(data){
+  const list = $('timelineList');
+  if (tlCat === 'receipt'){
+    const totals = data.map(m => Number(m.meta?.total)).filter(n => !isNaN(n) && n > 0);
+    if (totals.length){
+      const line = document.createElement('div');
+      line.className = 'areaSum';
+      line.textContent = totals.length + ' with amounts · $' + totals.reduce((a,b)=>a+b,0).toFixed(2) + ' total shown';
+      list.prepend(line);
+    }
+  }
+  if (tlCat === 'people'){
+    const names = [...new Set(data.map(m => m.meta?.name).filter(Boolean))];
+    if (names.length > 1){
+      const rowEl = document.createElement('div');
+      rowEl.className = 'pChips';
+      const all = document.createElement('button');
+      all.className = 'chip on'; all.textContent = 'Everyone';
+      all.onclick = () => { [...rowEl.children].forEach(c => c.classList.toggle('on', c === all));
+        list.querySelectorAll('.card').forEach(c => c.style.display = ''); };
+      rowEl.appendChild(all);
+      for (const n of names){
+        const b = document.createElement('button');
+        b.className = 'chip'; b.textContent = n;
+        b.onclick = () => { [...rowEl.children].forEach(c => c.classList.toggle('on', c === b));
+          list.querySelectorAll('.card').forEach(c => c.style.display = (c.dataset.pname === n) ? '' : 'none');
+          list.querySelectorAll('.dayHead').forEach(h => h.style.display = 'none'); };
+        rowEl.appendChild(b);
+      }
+      list.prepend(rowEl);
+    }
+  }
+}
 
 /* ---------- map view ---------- */
 let leafletReady = null, map = null, markerLayer = null;
@@ -1688,10 +1782,49 @@ async function signedUrl(path){
   if (data?.signedUrl){ urlCache.set(path, { url: data.signedUrl, exp: Date.now() + 3600000 }); return data.signedUrl; }
   return hit?.url;
 }
+function metaLineFor(m){
+  const x = m.meta || {};
+  const bits = [];
+  if (m.category === 'receipt'){
+    if (x.merchant) bits.push(escapeHtml(String(x.merchant)));
+    if (x.total != null && !isNaN(Number(x.total))) bits.push('$' + Number(x.total).toFixed(2));
+    let out = bits.join(' · ');
+    if (x.return_by) out += ` <span class="due">Return by ${escapeHtml(String(x.return_by))}</span>`;
+    if (x.warranty_until) out += ` <span class="due">Warranty until ${escapeHtml(String(x.warranty_until))}</span>`;
+    return out;
+  }
+  if (m.category === 'people'){
+    if (x.name) bits.push(escapeHtml(String(x.name)));
+    if (x.birthday) bits.push('🎂 ' + escapeHtml(String(x.birthday)));
+    return bits.join(' · ');
+  }
+  if (m.category === 'parking'){
+    if (x.garage) bits.push(escapeHtml(String(x.garage)));
+    if (x.level) bits.push('Level ' + escapeHtml(String(x.level)));
+    if (x.spot) bits.push('Spot ' + escapeHtml(String(x.spot)));
+    return bits.join(' · ');
+  }
+  if (m.category === 'left'){
+    if (x.item) bits.push(escapeHtml(String(x.item)));
+    if (x.where) bits.push('at ' + escapeHtml(String(x.where)));
+    let out = bits.join(' ');
+    if (x.resolved) out += ' <span class="due">Retrieved ✓</span>';
+    return out;
+  }
+  if (m.category === 'meds'){
+    if (x.medication) bits.push(escapeHtml(String(x.medication)));
+    if (x.dose) bits.push(escapeHtml(String(x.dose)));
+    return bits.join(' · ');
+  }
+  return '';
+}
 function card(m){
-  const el = document.createElement('div'); el.className='card' + (m.pinned?' pinnedCard':''); el.dataset.id=m.id;
+  const el = document.createElement('div'); el.className='card' + (m.pinned?' pinnedCard':'') + (m.meta?.resolved?' resolved':''); el.dataset.id=m.id;
+  if (m.meta?.name) el.dataset.pname = m.meta.name;
   const when = new Date(m.happened_at).toLocaleString(undefined,{ month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit' });
+  const mline = metaLineFor(m);
   el.innerHTML = `
+    ${mline ? `<div class="metaLine">${mline}</div>` : ''}
     ${m.content ? `<div class="content"></div>` : ''}
     ${m.photo_path ? `<img class="mem" alt="memory photo">` : ''}
     ${(m.ai_caption || m.ocr_text) ? `<div class="ocr"></div>` : ''}
@@ -1704,8 +1837,10 @@ function card(m){
     </div>
     <div class="cardActions">
       <button class="actPin ${m.pinned?'pinned':''}">${I.pin}<span>${m.pinned?'Unpin':'Pin'}</span></button>
+      <button class="actEdit"><svg class="i" viewBox="0 0 24 24"><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1z"/></svg><span>Edit</span></button>
       <button class="actRemind">${I.bell}<span>Remind me</span></button>
       ${m.lat!=null ? `<button class="actMap">${I.map}<span>Directions</span></button>` : ''}
+      ${m.category==='left' && !m.meta?.resolved ? `<button class="actGot">✓ <span>Got it back</span></button>` : ''}
       <button class="actDel">${I.trash}<span>Delete</span></button>
     </div>`;
   if (m.content) el.querySelector('.content').textContent = m.content;
@@ -1715,6 +1850,7 @@ function card(m){
     signedUrl(m.photo_path).then(u => { if (u) img.src = u; });
     img.onerror = () => { img.onerror = null; urlCache.delete(m.photo_path);
       signedUrl(m.photo_path).then(u => { if (u) img.src = u; }); };
+    img.onclick = () => openLightbox(m, img.src);
   }
   const pinBtn = el.querySelector('.actPin');
   pinBtn.onclick = async () => {
@@ -1730,6 +1866,15 @@ function card(m){
     loadPinned();
   };
   el.querySelector('.actRemind').onclick = () => openReminderModal(m);
+  el.querySelector('.actEdit').onclick = () => startEdit(m);
+  const gotBtn = el.querySelector('.actGot');
+  if (gotBtn) gotBtn.onclick = async () => {
+    const newMeta = { ...(m.meta || {}), resolved: true };
+    const { error } = await sb.from('memories').update({ meta: newMeta }).eq('id', m.id);
+    if (error) return toast(error.message);
+    m.meta = newMeta; el.classList.add('resolved'); gotBtn.remove(); tlDirty = true;
+    toast('Glad it\u2019s back');
+  };
   const mapBtn = el.querySelector('.actMap');
   if (mapBtn) mapBtn.onclick = () => window.open(directionsUrl(m.lat, m.lng, m.category === 'parking'), '_blank');
   el.querySelector('.actDel').onclick = () => {

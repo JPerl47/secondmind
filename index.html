@@ -190,6 +190,10 @@
   /* Radial hub */
   .hubTitle{text-align:center}
   .hubSub{text-align:center;color:var(--muted);font-size:12.5px;letter-spacing:.03em;margin:-16px 2px 6px}
+  #pushCard{border-radius:17px;padding:17px 19px;margin:0 0 18px;border:1px solid transparent;
+    background-image:linear-gradient(168deg,rgba(231,200,140,.10),rgba(255,255,255,.02)),
+      linear-gradient(140deg,rgba(231,200,140,.5),rgba(231,200,140,.15) 45%,rgba(201,211,234,.3));
+    background-origin:border-box;background-clip:padding-box,border-box;font-size:14.5px;line-height:1.55}
   .vaultStats{font-family:'Jost',sans-serif;font-size:10.5px;font-weight:500;letter-spacing:.22em;
     text-transform:uppercase;color:var(--goldSoft);margin:-16px 2px 16px}
   .colCard.dim{opacity:.45}
@@ -425,7 +429,7 @@
     </form>
     <button class="btnGhost" id="authToggle">New here? Create an account</button>
     <p class="authMsg" id="authMsg"></p>
-    <p class="verTag">SECONDMIND · BUILD 28</p>
+    <p class="verTag">SECONDMIND · BUILD 29</p>
   </div>
 </div>
 
@@ -540,9 +544,14 @@
     <!-- REMINDERS -->
     <section id="tab-reminders" class="hidden">
       <h2 class="sect">Gentle <em>reminders</em></h2>
-      <p class="hint">Create one from any memory with “Remind me”.</p>
+      <div id="pushCard" class="hidden">
+        <div id="pushMsg">Turn on notifications and reminders will reach your phone — even when the app is closed.</div>
+        <button class="btn" id="pushBtn" style="margin-top:12px">Turn on notifications</button>
+      </div>
+      <p class="hint">Create one from any memory with “Remind me”, or start fresh.</p>
+      <button class="btnGhost" id="newRemBtn" style="margin:4px 0 16px">+ New reminder</button>
       <div id="remindersList"></div>
-      <p class="verTag">SECONDMIND · BUILD 28</p>
+      <p class="verTag">SECONDMIND · BUILD 29</p>
     </section>
 
   </main>
@@ -595,7 +604,13 @@
   <div id="modal">
     <h3>Remind me</h3>
     <input class="field" id="remTitle" placeholder="Reminder title">
+    <div id="remQuick" style="display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 12px"></div>
     <input class="field" id="remDue" type="datetime-local" style="color-scheme:dark">
+    <select class="field" id="remRepeat" style="color-scheme:dark">
+      <option value="none">Does not repeat</option>
+      <option value="daily">Repeats daily</option>
+      <option value="weekly">Repeats weekly</option>
+    </select>
     <button class="btn" id="remSave">Save reminder</button>
     <button class="btnGhost" id="remCancel">Cancel</button>
   </div>
@@ -732,6 +747,7 @@ function bindAuthState(){
     appInited = true;
     migrateLegacyQueue();
     initCapture(); loadTimeline(true); loadReminders(); loadOnThisDay(); flushQueue(); loadFindCar();
+    setTimeout(resyncPush, 1200);
     sb.functions.invoke('ai', { body: { action: 'backfill' } }).catch(()=>{});
     setTimeout(() => sb.functions.invoke('ai', { body: { action: 'search', q: 'warm up', limit: 1 } }).catch(()=>{}), 2500);
   });
@@ -1732,12 +1748,99 @@ function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; 
 
 /* ---------- reminders ---------- */
 let remMemory = null;
+/* ---------- push notifications ---------- */
+const VAPID_PUBLIC = 'BMmIun-ou2lTeEjNxzcDzqJw9aAV-bpNGRfWMCixJy3rCUsu2x6TbCiNvQwvGECYmS8fSdVNN4IKAN4yblA8erg';
+function urlB64ToU8(str){
+  const pad = '='.repeat((4 - str.length % 4) % 4);
+  const b = atob((str + pad).replace(/-/g, '+').replace(/_/g, '/'));
+  return Uint8Array.from([...b].map(c => c.charCodeAt(0)));
+}
+const PUSH_OK = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+async function savePushSub(sub){
+  const j = sub.toJSON();
+  await sb.from('push_subscriptions').upsert(
+    { endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth }, { onConflict: 'endpoint' });
+}
+async function enablePush(){
+  try {
+    if (!PUSH_OK){
+      toast(IS_IOS ? 'First add SecondMind to your home screen (Share → Add to Home Screen), then turn on notifications from the installed app'
+                   : 'This browser does not support notifications');
+      return;
+    }
+    const perm = await Notification.requestPermission();
+    updatePushCard();
+    if (perm !== 'granted'){ toast('Notifications are blocked — allow them in Settings › SecondMind'); return; }
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToU8(VAPID_PUBLIC) });
+    await savePushSub(sub);
+    updatePushCard();
+    toast('Notifications on — reminders will reach this phone');
+  } catch(e){ toast('Could not turn on notifications: ' + (e.message || e)); }
+}
+async function resyncPush(){
+  try {
+    if (!PUSH_OK || Notification.permission !== 'granted') return;
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription()
+      || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToU8(VAPID_PUBLIC) });
+    if (sub) await savePushSub(sub);
+  } catch {}
+}
+async function updatePushCard(){
+  const cardEl = $('pushCard');
+  if (!PUSH_OK){
+    if (IS_IOS && !STANDALONE){
+      $('pushMsg').textContent = 'To get reminder alerts, add SecondMind to your home screen: tap Share, then “Add to Home Screen”, and open it from there.';
+      $('pushBtn').style.display = 'none';
+      cardEl.classList.remove('hidden');
+    } else cardEl.classList.add('hidden');
+    return;
+  }
+  if (Notification.permission === 'granted'){
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (sub){ cardEl.classList.add('hidden'); return; }
+  }
+  if (Notification.permission === 'denied'){
+    $('pushMsg').textContent = 'Notifications are turned off for SecondMind in your phone settings. Enable them there and reminders will reach you.';
+    $('pushBtn').style.display = 'none';
+  } else {
+    $('pushMsg').textContent = 'Turn on notifications and reminders will reach your phone — even when the app is closed.';
+    $('pushBtn').style.display = '';
+  }
+  cardEl.classList.remove('hidden');
+}
+$('pushBtn').onclick = enablePush;
+$('newRemBtn').onclick = () => openReminderModal(null);
+
+function toLocalInput(d){ const x = new Date(d); x.setMinutes(x.getMinutes() - x.getTimezoneOffset()); return x.toISOString().slice(0,16); }
+function buildRemQuick(){
+  const box = $('remQuick'); box.innerHTML = '';
+  const now = () => new Date();
+  const opts = [
+    ['In 1 hour', () => { const d = now(); d.setHours(d.getHours()+1); return d; }],
+    ['Tonight 8pm', () => { const d = now(); d.setHours(20,0,0,0); if (d < now()) d.setDate(d.getDate()+1); return d; }],
+    ['Tomorrow 9am', () => { const d = now(); d.setDate(d.getDate()+1); d.setHours(9,0,0,0); return d; }],
+    ['Next week', () => { const d = now(); d.setDate(d.getDate()+7); d.setHours(9,0,0,0); return d; }],
+  ];
+  for (const [label, fn] of opts){
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.textContent = label;
+    b.onclick = () => { $('remDue').value = toLocalInput(fn());
+      [...box.children].forEach(x => x.classList.toggle('on', x === b)); };
+    box.appendChild(b);
+  }
+}
 function openReminderModal(m){
   remMemory = m;
-  $('remTitle').value = (m.content||'').slice(0,80) || 'About a photo memory';
+  $('remTitle').value = m ? ((m.content||'').slice(0,80) || 'About a photo memory') : '';
   const d = new Date(); d.setDate(d.getDate()+1); d.setMinutes(d.getMinutes()-d.getTimezoneOffset());
   $('remDue').value = d.toISOString().slice(0,16);
+  $('remRepeat').value = 'none';
+  buildRemQuick();
   $('modalBack').classList.remove('hidden');
+  setTimeout(() => $('remTitle').focus(), 60);
 }
 $('remCancel').onclick = () => $('modalBack').classList.add('hidden');
 $('modalBack').onclick = e => { if (e.target.id==='modalBack') $('modalBack').classList.add('hidden'); };
@@ -1745,11 +1848,15 @@ $('remSave').onclick = async () => {
   const title = $('remTitle').value.trim(); const due = $('remDue').value;
   if (!title || !due) return toast('Add a title and a date');
   const { error } = await sb.from('reminders').insert({
-    memory_id: remMemory?.id ?? null, title, due_at: new Date(due).toISOString() });
+    memory_id: remMemory?.id ?? null, title, due_at: new Date(due).toISOString(),
+    repeat: $('remRepeat').value || 'none' });
   if (error) return toast(error.message);
-  $('modalBack').classList.add('hidden'); toast('Reminder set'); loadReminders();
+  $('modalBack').classList.add('hidden');
+  toast(Notification?.permission === 'granted' ? 'Reminder set — I\u2019ll notify you' : 'Reminder set');
+  loadReminders();
 };
 async function loadReminders(){
+  updatePushCard();
   const { data, error } = await sb.from('reminders').select('*').order('due_at');
   if (error) return;
   const box = $('remindersList'); box.innerHTML='';
@@ -1762,11 +1869,13 @@ async function loadReminders(){
     el.innerHTML = `
       <input type="checkbox" ${r.done?'checked':''}>
       <div><div class="rTitle"></div>
-      <div class="rDue">${overdue?'Overdue · ':''}${new Date(r.due_at).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</div></div>
+      <div class="rDue">${overdue?'Overdue · ':''}${new Date(r.due_at).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}${r.repeat && r.repeat !== 'none' ? ' · repeats ' + r.repeat : ''}</div></div>
       <button class="rDel">${I.trash}</button>`;
     el.querySelector('.rTitle').textContent = r.title;
     el.querySelector('input').onchange = async e => {
-      await sb.from('reminders').update({ done: e.target.checked }).eq('id', r.id); loadReminders(); };
+      const upd = { done: e.target.checked };
+      if (!e.target.checked) upd.notified_at = null;   // un-done => it can notify again
+      await sb.from('reminders').update(upd).eq('id', r.id); loadReminders(); };
     el.querySelector('.rDel').onclick = async () => {
       await sb.from('reminders').delete().eq('id', r.id); el.remove(); };
     box.appendChild(el);

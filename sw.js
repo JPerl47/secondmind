@@ -1,5 +1,5 @@
 /* SecondMind service worker — offline shell + cached assets */
-const CACHE = 'secondmind-v28';
+const CACHE = 'secondmind-v29';
 const ASSETS = ['./', 'index.html', 'manifest.json', 'icon.png', 'icon-512.png', 'mark.png', 'logo.jpg'];
 
 self.addEventListener('install', e => {
@@ -49,4 +49,25 @@ self.addEventListener('fetch', e => {
     if (hit) { e.waitUntil(refresh.then(() => {}, () => {})); return hit; }
     return refresh;
   })());
+});
+
+self.addEventListener('push', e => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch { d = { body: e.data ? e.data.text() : '' }; }
+  e.waitUntil(self.registration.showNotification(d.title || 'SecondMind', {
+    body: d.body || '',
+    icon: 'icon.png',
+    badge: 'icon.png',
+    tag: d.tag || 'secondmind',
+    data: { url: d.url || './' },
+  }));
+});
+
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  const url = new URL(e.notification.data?.url || './', self.registration.scope).href;
+  e.waitUntil(clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+    for (const c of list){ if (c.url.startsWith(self.registration.scope)) return c.focus(); }
+    return clients.openWindow(url);
+  }));
 });

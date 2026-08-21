@@ -1,5 +1,5 @@
 /* SecondMind service worker — offline shell + cached assets */
-const CACHE = 'secondmind-v27';
+const CACHE = 'secondmind-v28';
 const ASSETS = ['./', 'index.html', 'manifest.json', 'icon.png', 'icon-512.png', 'mark.png', 'logo.jpg'];
 
 self.addEventListener('install', e => {
@@ -25,10 +25,11 @@ self.addEventListener('fetch', e => {
   if (req.mode === 'navigate') {
     e.respondWith(
       fetch(req).then(r => {
-        const copy = r.clone();
-        caches.open(CACHE).then(c => c.put('./', copy));
+        if (r.ok) { const copy = r.clone(); caches.open(CACHE).then(c => c.put('./', copy)); }
         return r;
-      }).catch(() => caches.match('./'))
+      }).catch(() => caches.match('./').then(hit => hit ||
+        new Response('<meta name="viewport" content="width=device-width,initial-scale=1"><body style="background:#070a13;color:#eef0f7;font-family:sans-serif;display:grid;place-items:center;height:100vh"><p>SecondMind is offline — reconnect and try again.</p></body>',
+          { headers: { 'Content-Type': 'text/html' } })))
     );
     return;
   }
@@ -39,13 +40,13 @@ self.addEventListener('fetch', e => {
     url.hostname.endsWith('jsdelivr.net');
   if (!cacheable) return;
 
-  e.respondWith(
-    caches.match(req).then(hit => {
-      const refresh = fetch(req).then(r => {
-        if (r.ok) caches.open(CACHE).then(c => c.put(req, r.clone()));
-        return r;
-      }).catch(() => hit);
-      return hit || refresh;
-    })
-  );
+  e.respondWith((async () => {
+    const hit = await caches.match(req);
+    const refresh = fetch(req).then(r => {
+      if (r.ok) caches.open(CACHE).then(c => c.put(req, r.clone()));
+      return r;
+    }).catch(() => hit);
+    if (hit) { e.waitUntil(refresh.then(() => {}, () => {})); return hit; }
+    return refresh;
+  })());
 });

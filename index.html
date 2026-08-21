@@ -425,7 +425,7 @@
     </form>
     <button class="btnGhost" id="authToggle">New here? Create an account</button>
     <p class="authMsg" id="authMsg"></p>
-    <p class="verTag">SECONDMIND · BUILD 27</p>
+    <p class="verTag">SECONDMIND · BUILD 28</p>
   </div>
 </div>
 
@@ -542,7 +542,7 @@
       <h2 class="sect">Gentle <em>reminders</em></h2>
       <p class="hint">Create one from any memory with “Remind me”.</p>
       <div id="remindersList"></div>
-      <p class="verTag">SECONDMIND · BUILD 27</p>
+      <p class="verTag">SECONDMIND · BUILD 28</p>
     </section>
 
   </main>
@@ -601,7 +601,7 @@
   </div>
 </div>
 
-<div id="toast"></div>
+<div id="toast" role="status" aria-live="polite"></div>
 <div id="offlineBadge" class="hidden">Offline — captures will sync later</div>
 <div id="importBadge" class="hidden"></div>
 <input type="file" id="importInput" accept="image/*" multiple class="hidden">
@@ -623,8 +623,18 @@ let sb = makeClient();
 const $ = id => document.getElementById(id);
 const toastEl = $('toast');
 let toastTimer;
-function toast(msg){ toastEl.textContent = msg; toastEl.classList.add('show');
+function toast(msg){ toastEl.style.pointerEvents = 'none'; toastEl.textContent = msg; toastEl.classList.add('show');
   clearTimeout(toastTimer); toastTimer = setTimeout(()=>toastEl.classList.remove('show'), 3200); }
+function undoToast(msg, onUndo){
+  toastEl.innerHTML = ''; toastEl.style.pointerEvents = 'auto';
+  const sp = document.createElement('span'); sp.textContent = msg;
+  const b = document.createElement('button'); b.textContent = 'Undo';
+  b.style.cssText = 'margin-left:16px;background:none;border:none;color:var(--gold);font-weight:600;cursor:pointer;font-size:13px;letter-spacing:.05em';
+  b.onclick = () => { toastEl.classList.remove('show'); toastEl.style.pointerEvents = 'none'; onUndo(); };
+  toastEl.append(sp, b);
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { toastEl.classList.remove('show'); toastEl.style.pointerEvents = 'none'; }, 5200);
+}
 
 if ('serviceWorker' in navigator) { try { navigator.serviceWorker.register('sw.js'); } catch {} }
 
@@ -705,15 +715,27 @@ async function doAuth(){
 }
 $('signOutBtn').onclick = () => sb.auth.signOut();
 
+let uid = null, appInited = false, authSub = null;
 function bindAuthState(){
-  sb.auth.onAuthStateChange((_ev, session) => {
+  if (authSub){ try { authSub.unsubscribe(); } catch {} }
+  const { data } = sb.auth.onAuthStateChange((ev, session) => {
     const authed = !!session;
+    uid = session?.user?.id || null;
     $('authView').classList.toggle('hidden', authed);
     $('appView').classList.toggle('hidden', !authed);
-    if (authed) { initCapture(); loadTimeline(true); loadReminders(); loadOnThisDay(); flushQueue(); loadFindCar();
-      sb.functions.invoke('ai', { body: { action: 'backfill' } }).catch(()=>{});
-      setTimeout(() => sb.functions.invoke('ai', { body: { action: 'search', q: 'warm up', limit: 1 } }).catch(()=>{}), 2500); }
+    if (!authed){
+      appInited = false;
+      try { localStorage.removeItem('sm_recent'); } catch {}
+      return;
+    }
+    if (appInited) return;   // ignore token refreshes and duplicate events mid-session
+    appInited = true;
+    migrateLegacyQueue();
+    initCapture(); loadTimeline(true); loadReminders(); loadOnThisDay(); flushQueue(); loadFindCar();
+    sb.functions.invoke('ai', { body: { action: 'backfill' } }).catch(()=>{});
+    setTimeout(() => sb.functions.invoke('ai', { body: { action: 'search', q: 'warm up', limit: 1 } }).catch(()=>{}), 2500);
   });
+  authSub = data.subscription;
 }
 bindAuthState();
 
@@ -723,18 +745,78 @@ window.addEventListener('online', () => { updateOnline(); flushQueue(); });
 window.addEventListener('offline', updateOnline);
 updateOnline();
 
-function getQueue(){ try { return JSON.parse(localStorage.getItem('sm_queue')||'[]'); } catch { return []; } }
-function setQueue(q){ localStorage.setItem('sm_queue', JSON.stringify(q)); }
+function queueKey(){ return 'sm_queue_' + (uid || 'anon'); }
+function getQueue(){ try { return JSON.parse(localStorage.getItem(queueKey())||'[]'); } catch { return []; } }
+function setQueue(q){ try { localStorage.setItem(queueKey(), JSON.stringify(q)); } catch {} }
+function migrateLegacyQueue(){
+  try {
+    const legacy = JSON.parse(localStorage.getItem('sm_queue')||'[]');
+    if (legacy.length){ setQueue(getQueue().concat(legacy)); }
+    localStorage.removeItem('sm_queue');
+    const anon = JSON.parse(localStorage.getItem('sm_queue_anon')||'[]');
+    if (anon.length && uid){ setQueue(getQueue().concat(anon)); localStorage.removeItem('sm_queue_anon'); }
+  } catch {}
+}
+/* IndexedDB store for photos captured offline */
+function idbOpen(){ return new Promise((res, rej) => {
+  const r = indexedDB.open('secondmind', 1);
+  r.onupgradeneeded = () => r.result.createObjectStore('qphotos');
+  r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+}); }
+async function qPhotoPut(key, blob){ try { const db = await idbOpen();
+  await new Promise((res, rej) => { const tx = db.transaction('qphotos','readwrite');
+    tx.objectStore('qphotos').put(blob, key); tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
+  return true; } catch { return false; } }
+async function qPhotoGet(key){ try { const db = await idbOpen();
+  return await new Promise((res, rej) => { const tx = db.transaction('qphotos','readonly');
+    const g = tx.objectStore('qphotos').get(key); g.onsuccess = () => res(g.result || null); g.onerror = () => rej(g.error); });
+  } catch { return null; } }
+async function qPhotoDel(key){ try { const db = await idbOpen();
+  await new Promise((res) => { const tx = db.transaction('qphotos','readwrite');
+    tx.objectStore('qphotos').delete(key); tx.oncomplete = res; tx.onerror = res; }); } catch {} }
+
+function isNetFail(e){
+  return !navigator.onLine || e instanceof TypeError ||
+    /failed to fetch|load failed|network|fetch failed|timed? ?out/i.test(String(e?.message || e || ''));
+}
+let flushing = false;
 async function flushQueue(){
+  if (flushing) return;
   const q = getQueue();
-  if (!q.length || !navigator.onLine) return;
+  if (!q.length || !navigator.onLine || !uid) return;
+  flushing = true;
   let ok = 0;
-  for (const row of [...q]) {
-    const { error } = await sb.from('memories').insert(row);
-    if (error) break;
-    q.shift(); ok++;
-  }
-  setQueue(q);
+  try {
+    for (let i = 0; i < q.length; ){
+      const row = q[i];
+      if (row.user_id && row.user_id !== uid){ i++; continue; }   // never flush another account's rows
+      const payload = { ...row };
+      delete payload._photoKey; delete payload._tries;
+      if (!payload.user_id) payload.user_id = uid;
+      try {
+        if (row._photoKey){
+          const blob = await qPhotoGet(row._photoKey);
+          if (blob){
+            payload.photo_path = `${uid}/${Date.now()}_${Math.floor(Math.random()*1e6)}.jpg`;
+            payload.kind = 'photo';
+            const { error: upErr } = await sb.storage.from('photos').upload(payload.photo_path, blob, { contentType: 'image/jpeg' });
+            if (upErr) throw upErr;
+          }
+        }
+        const { data: ins, error } = await sb.from('memories').insert(payload).select('id').single();
+        if (error) throw error;
+        if (row._photoKey){ qPhotoDel(row._photoKey);
+          if (ins?.id && payload.photo_path) sb.functions.invoke('ai', { body: { action: 'describe_photo', id: ins.id } }).catch(()=>{}); }
+        q.splice(i, 1); setQueue(q); ok++;
+      } catch(e){
+        if (isNetFail(e)) break;                       // try again when the network is back
+        row._tries = (row._tries || 0) + 1;
+        if (row._tries >= 3){ if (row._photoKey) qPhotoDel(row._photoKey); q.splice(i, 1); setQueue(q);
+          toast('One offline memory could not sync and was skipped'); }
+        else { setQueue(q); i++; }                     // move past it, retry later
+      }
+    }
+  } finally { flushing = false; }
   if (ok) { toast(`Synced ${ok} offline ${ok===1?'memory':'memories'}`); tlDirty = true; loadTimeline(true);
     sb.functions.invoke('ai', { body: { action: 'backfill' } }).catch(()=>{}); }
 }
@@ -763,7 +845,8 @@ function initCapture(){
   getLocation();
   const p = new URLSearchParams(location.search);
   const shared = [p.get('share_title'), p.get('share_text'), p.get('share_url')].filter(Boolean).join('\n');
-  if (shared) { openComposer(); $('memText').value = shared; paintCatChips(); toast('Shared content added — tap Save'); }
+  if (shared) { openComposer(); $('memText').value = shared; paintCatChips(); toast('Shared content added — tap Save');
+    try { history.replaceState(null, '', location.pathname); } catch {} }
 }
 function getLocation(){
   if (!navigator.geolocation){ $('locLbl').textContent='unavailable'; return; }
@@ -909,24 +992,29 @@ $('voiceBtn').onclick = async () => {
 $('photoBtn').onclick = () => $('photoInput').click();
 $('photoInput').onchange = async e => {
   const f = e.target.files[0]; if (!f) return;
-  photoFile = await compressImage(f);
+  try { photoFile = await compressImage(f); }
+  catch { photoFile = null; $('photoInput').value = '';
+    toast('That photo format isn\u2019t supported \u2014 please choose a JPEG or PNG'); return; }
+  if ($('previewImg').src?.startsWith('blob:')) { try { URL.revokeObjectURL($('previewImg').src); } catch {} }
   $('previewImg').src = URL.createObjectURL(photoFile);
   $('photoPreview').classList.remove('hidden');
   memKind = 'photo';
 };
 $('removePhoto').onclick = () => { photoFile=null; $('photoPreview').classList.add('hidden'); $('photoInput').value=''; if(memKind==='photo') memKind='note'; };
 function compressImage(file){
-  return new Promise(res => {
+  return new Promise((res, rej) => {
     const img = new Image();
+    const url = URL.createObjectURL(file);
     img.onload = () => {
       const max = 1600, s = Math.min(1, max/Math.max(img.width,img.height));
       const c = document.createElement('canvas');
       c.width = Math.round(img.width*s); c.height = Math.round(img.height*s);
       c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      URL.revokeObjectURL(url);
       c.toBlob(b => res(b || file), 'image/jpeg', .85);
     };
-    img.onerror = () => res(file);
-    img.src = URL.createObjectURL(file);
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('unsupported-image')); };
+    img.src = url;
   });
 }
 
@@ -953,35 +1041,39 @@ async function runOcr(blob, memId){
 }
 
 /* save */
+let lastFixAt = 0;
 async function saveMemory(quick){
   const text = quick ? quick.content : $('memText').value.trim();
   if (!text && !photoFile) return toast('Write, speak, or add a photo first');
   const btn = $('saveBtn');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving…';
+  const thePhoto = (!quick && photoFile) ? photoFile : null;
+  let row = null;
   try {
-    const row = {
-      kind: (photoFile && !quick) ? 'photo' : memKind,
+    const category = quick ? quick.category : (chosenCat || autoCat(text));
+    if (category === 'parking' && navigator.onLine && Date.now() - lastFixAt > 15000){
+      const fix = await freshFix();
+      if (fix){ loc = { ...(loc || {}), ...fix }; lastFixAt = Date.now(); }
+    }
+    row = {
+      kind: thePhoto ? 'photo' : (quick ? 'note' : memKind),
       content: text || null,
       photo_path: null,
-      category: quick ? quick.category : (chosenCat || autoCat(text)),
+      category,
       lat: loc?.lat ?? null, lng: loc?.lng ?? null, place_label: loc?.label ?? null,
     };
-    if (quick) row.kind = 'note';
     if (!quick && !$('whenWrap').classList.contains('hidden') && $('whenInput').value)
       row.happened_at = new Date($('whenInput').value).toISOString();
 
-    if (!navigator.onLine && !photoFile) {
-      const q = getQueue(); q.push(row); setQueue(q);
-      if (!quick) resetCapture();
-      toast('Saved offline — will sync automatically');
-      return;
-    }
+    if (!navigator.onLine) { await queueOffline(row, thePhoto, quick); return; }
+
     const { data: { user } } = await sb.auth.getUser();
+    if (!user){ await queueOffline(row, thePhoto, quick, 'Session expired — your memory is saved on this phone and will sync after you sign in'); return; }
     let blobForOcr = null;
-    if (photoFile && !quick){
+    if (thePhoto){
       row.photo_path = `${user.id}/${Date.now()}.jpg`;
-      blobForOcr = photoFile;
-      const { error: upErr } = await sb.storage.from('photos').upload(row.photo_path, photoFile, { contentType:'image/jpeg' });
+      blobForOcr = thePhoto;
+      const { error: upErr } = await sb.storage.from('photos').upload(row.photo_path, thePhoto, { contentType:'image/jpeg' });
       if (upErr) throw upErr;
     }
     const { data: inserted, error } = await sb.from('memories').insert(row).select('id').single();
@@ -996,17 +1088,24 @@ async function saveMemory(quick){
       sb.functions.invoke('ai', { body: { action: 'describe_photo', id: inserted.id } }).catch(()=>{});
     }
   } catch(e){
-    if (!navigator.onLine || (e.message||'').includes('Failed to fetch')) {
-      const q = getQueue();
-      q.push({ content: text || null, category: quick ? quick.category : (chosenCat || autoCat(text)),
-               lat: loc?.lat ?? null, lng: loc?.lng ?? null, place_label: loc?.label ?? null });
-      setQueue(q);
-      if (!quick) resetCapture();
-      toast('Saved offline — will sync automatically');
-    } else toast('Could not save: ' + (e.message||e));
+    if (isNetFail(e) && row) await queueOffline(row, thePhoto, quick);
+    else toast('Could not save: ' + (e.message||e));
   } finally {
     btn.disabled = false; btn.textContent = 'Save memory';
   }
+}
+async function queueOffline(row, photo, quick, msg){
+  const qrow = { ...row, user_id: uid || undefined };
+  delete qrow.photo_path;
+  if (photo){
+    const key = 'qp_' + Date.now() + '_' + Math.floor(Math.random()*1e6);
+    const stored = await qPhotoPut(key, photo);
+    if (stored) qrow._photoKey = key;
+    else toast('Photo could not be stored offline — the text will sync, please re-add the photo later');
+  }
+  const q = getQueue(); q.push(qrow); setQueue(q);
+  if (!quick) resetCapture();
+  toast(msg || 'Saved offline — will sync automatically');
 }
 function resetCapture(){
   $('memText').value=''; photoFile=null; $('photoPreview').classList.add('hidden'); $('photoInput').value='';
@@ -1021,6 +1120,7 @@ function openEcho(){ $('echoBack').classList.remove('hidden'); setTimeout(() => 
 function closeEcho(){ $('echoBack').classList.add('hidden'); $('echoInput').value=''; }
 let echoRec = null, echoListening = false;
 $('echoBtn').onclick = () => {
+  if (echoHoldFired){ echoHoldFired = false; return; }
   if (echoListening){ try { echoRec.stop(); } catch {} return; }
   if (!SR) return openEcho();
   try {
@@ -1042,9 +1142,9 @@ $('echoBtn').onclick = () => {
     echoRec.start();
   } catch { toast('Voice isn’t available right now — hold the echo to type instead'); }
 };
-let echoHold = null;
+let echoHold = null, echoHoldFired = false;
 $('echoBtn').addEventListener('pointerdown', () => {
-  echoHold = setTimeout(() => { try { echoRec?.stop(); } catch {}; openEcho(); }, 550);
+  echoHold = setTimeout(() => { echoHoldFired = true; try { echoRec?.stop(); } catch {}; openEcho(); }, 550);
 });
 $('echoBtn').addEventListener('pointerup', () => clearTimeout(echoHold));
 $('echoBtn').addEventListener('pointerleave', () => clearTimeout(echoHold));
@@ -1076,7 +1176,22 @@ $('echoMic').onclick = async () => {
 function triggerOrb(act){ goTab('capture'); document.querySelector(`.orb[data-act="${act}"]`)?.click(); }
 function plainText(t){ return (t||'').replace(/\*\*/g,'').replace(/(^|\s)\*(\S[^*]*\S)\*(?=\s|$)/g,'$1$2').replace(/^#+\s+/gm,''); }
 let inlineSeq = 0;
-function hideEchoAnswer(){ $('echoAnswer').classList.add('hidden'); $('echoAnswerBody').textContent=''; }
+function hideEchoAnswer(){ $('echoAnswer').classList.add('hidden'); $('echoAnswerBody').textContent=''; $('echoAnswerMore').style.display=''; }
+function openDirections(lat, lng, walk){
+  const url = directionsUrl(lat, lng, walk);
+  let w = null;
+  try { w = window.open(url, '_blank'); } catch {}
+  if (!w){
+    $('echoAnswer').classList.remove('hidden');
+    $('echoAnswerMore').style.display = 'none';
+    const body = $('echoAnswerBody'); body.innerHTML = '';
+    const b = document.createElement('button');
+    b.textContent = 'Open walking directions →';
+    b.style.cssText = "background:none;border:none;color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:19.5px;cursor:pointer;padding:0";
+    b.onclick = () => { window.open(url, '_blank'); hideEchoAnswer(); };
+    body.appendChild(b);
+  }
+}
 $('echoAnswerClose').onclick = hideEchoAnswer;
 function goAskWith(q){ hideEchoAnswer(); goTab('ask'); $('searchInput').value = q; doSearch(); }
 async function answerInline(q){
@@ -1105,7 +1220,7 @@ async function routeText(raw){
 
   // instant commands (short, unambiguous)
   if (/(find my car|where.?s my car|where is my car|back to my car|take me to my car)/.test(l) && carSpot){
-    window.open(directionsUrl(carSpot.lat, carSpot.lng, true), '_blank'); return;
+    openDirections(carSpot.lat, carSpot.lng, true); return;
   }
   if (words <= 5 && /\bmap\b/.test(l)){ goTab('timeline'); setView('map'); return; }
   if (words <= 5 && /(collections?|library|vault)/.test(l)){ goTab('timeline'); setView('col'); return; }
@@ -1133,7 +1248,7 @@ async function routeText(raw){
     if (r?.data?.enabled && r.data.intent){
       const it = r.data.intent, tg = r.data.target;
       if (it === 'navigate'){
-        if (tg === 'findcar' && carSpot){ window.open(directionsUrl(carSpot.lat, carSpot.lng, true), '_blank'); return; }
+        if (tg === 'findcar' && carSpot){ openDirections(carSpot.lat, carSpot.lng, true); return; }
         if (tg === 'reminders'){ goTab('reminders'); return; }
         if (tg === 'map' || tg === 'collections' || tg === 'timeline'){
           goTab('timeline'); setView(tg === 'map' ? 'map' : tg === 'collections' ? 'col' : 'list'); return;
@@ -1161,6 +1276,7 @@ function timeAgo(iso){
   return Math.round(h / 24) + 'd ago';
 }
 function directionsUrl(lat, lng, walk){
+  lat = Number(lat); lng = Number(lng);
   const apple = /iPad|iPhone|iPod/.test(navigator.userAgent);
   return apple
     ? `https://maps.apple.com/?daddr=${lat},${lng}&dirflg=${walk ? 'w' : 'd'}`
@@ -1168,11 +1284,16 @@ function directionsUrl(lat, lng, walk){
 }
 let carSpot = null;
 async function loadFindCar(){
-  const { data } = await sb.from('memories')
+  const { data, error } = await sb.from('memories')
     .select('id,lat,lng,place_label,happened_at')
     .eq('category','parking').not('lat','is',null)
     .order('happened_at', { ascending: false }).limit(1);
-  const m = data?.[0];
+  let m = data?.[0];
+  if (error || !data){
+    try { m = JSON.parse(localStorage.getItem('sm_car_' + uid) || 'null') || undefined; } catch {}
+  } else {
+    try { localStorage.setItem('sm_car_' + uid, JSON.stringify(m ?? null)); } catch {}
+  }
   const fresh = m && (Date.now() - new Date(m.happened_at).getTime()) < 7 * 864e5;
   carSpot = fresh ? m : null;
   $('findCar').classList.toggle('hidden', !carSpot);
@@ -1189,7 +1310,8 @@ async function loadOnThisDay(){
   const offsets = [{m:1,l:'1 month ago'},{m:6,l:'6 months ago'},{m:12,l:'1 year ago'},{m:24,l:'2 years ago'}];
   const now = new Date();
   const results = await Promise.all(offsets.map(async o => {
-    const d = new Date(now.getFullYear(), now.getMonth()-o.m, now.getDate());
+    const d = new Date(now.getFullYear(), now.getMonth()-o.m, 1);
+    d.setDate(Math.min(now.getDate(), new Date(d.getFullYear(), d.getMonth()+1, 0).getDate()));
     const from = new Date(d); from.setHours(0,0,0,0);
     const to = new Date(d); to.setHours(23,59,59,999);
     const { data } = await sb.from('memories').select('*')
@@ -1288,9 +1410,11 @@ $('micBtn').onclick = async () => {
     askRec.start(); askRecOn=true; $('micBtn').classList.add('recording');
   } catch { dictationFallback($('searchInput')); }
 };
+let searchSeq = 0;
 async function doSearch(){
   const raw = $('searchInput').value.trim();
   if (!raw) return;
+  const seq = ++searchSeq;
   addRecent(raw); renderAskChips();
   const { cleaned, from, to, note } = parseDates(raw);
   $('dateNote').classList.toggle('hidden', !note);
@@ -1303,8 +1427,9 @@ async function doSearch(){
     sb.rpc('search_memories', { q: qText, from_ts: fromIso, to_ts: toIso }),
     sb.functions.invoke('ai', { body: { action: 'search', q: raw, from_ts: fromIso, to_ts: toIso } }).catch(() => null),
   ]);
+  if (seq !== searchSeq) return;
   if (kw.error && !sem?.data?.matches?.length){
-    $('searchResults').innerHTML = `<p class="empty">Search failed: ${kw.error.message}</p>`; return; }
+    $('searchResults').innerHTML = `<p class="empty">Search failed: ${escapeHtml(kw.error.message)}</p>`; return; }
   const seen = new Set(); const rows = [];
   for (const r of (kw.data || [])) if (!seen.has(r.id)) { seen.add(r.id); rows.push(r); }
   for (const r of (sem?.data?.matches || [])) if (!seen.has(r.id)) { seen.add(r.id); rows.push({ ...r, _sem: true }); }
@@ -1453,7 +1578,24 @@ async function loadTimeline(reset){
   if (tlKind === 'photo') qy = qy.eq('kind', 'photo');
   else if (tlKind === 'pinned') qy = qy.eq('pinned', true);
   const { data, error } = await qy.range(tlOffset, tlOffset+PAGE_SIZE-1);
-  if (error){ toast(error.message); return; }
+  if (error){
+    if (isNetFail(error) && tlOffset === 0){
+      try {
+        const cached = JSON.parse(localStorage.getItem('sm_tlcache_' + uid) || 'null');
+        if (cached?.length){
+          $('timelineList').innerHTML = '<p class="empty" style="padding:10px 20px">Offline — showing your most recent memories</p>';
+          for (const mrow of cached) $('timelineList').appendChild(card(mrow));
+          $('moreBtn').classList.add('hidden');
+          return;
+        }
+      } catch {}
+    }
+    toast(error.message); return;
+  }
+  if (reset && tlCat === null && tlKind === null){
+    try { localStorage.setItem('sm_tlcache_' + uid,
+      JSON.stringify(data.slice(0, 40).map(({embedding, fts, ocr_text, ...keep}) => keep))); } catch {}
+  }
   if (!data.length && tlOffset===0){
     $('timelineList').innerHTML = '<p class="empty">Nothing here yet.<br>Tap a circle on the home screen to save your first memory.</p>';
     $('moreBtn').classList.add('hidden'); return;
@@ -1524,10 +1666,11 @@ async function renderMap(){
 /* ---------- memory card ---------- */
 const urlCache = new Map();
 async function signedUrl(path){
-  if (urlCache.has(path)) return urlCache.get(path);
+  const hit = urlCache.get(path);
+  if (hit && hit.exp - Date.now() > 300000) return hit.url;
   const { data } = await sb.storage.from('photos').createSignedUrl(path, 3600);
-  if (data?.signedUrl) urlCache.set(path, data.signedUrl);
-  return data?.signedUrl;
+  if (data?.signedUrl){ urlCache.set(path, { url: data.signedUrl, exp: Date.now() + 3600000 }); return data.signedUrl; }
+  return hit?.url;
 }
 function card(m){
   const el = document.createElement('div'); el.className='card' + (m.pinned?' pinnedCard':''); el.dataset.id=m.id;
@@ -1537,11 +1680,11 @@ function card(m){
     ${m.photo_path ? `<img class="mem" alt="memory photo">` : ''}
     ${(m.ai_caption || m.ocr_text) ? `<div class="ocr"></div>` : ''}
     <div class="meta">
-      <span class="catTag">${catLabel(m.category)}</span>
+      <span class="catTag">${escapeHtml(catLabel(m.category))}</span>
       <span>${when}</span>
       ${m._sem ? `<span style="color:var(--gold);letter-spacing:.06em">≈ related</span>` : ''}
       ${m.place_label ? `<span>${I.geo} ${escapeHtml(m.place_label)}</span>` :
-        (m.lat!=null ? `<span>${I.geo} <a style="color:var(--silver)" target="_blank" href="https://maps.google.com/?q=${m.lat},${m.lng}">map</a></span>` : '')}
+        (m.lat!=null ? `<span>${I.geo} <a style="color:var(--silver)" target="_blank" href="https://maps.google.com/?q=${Number(m.lat)},${Number(m.lng)}">map</a></span>` : '')}
     </div>
     <div class="cardActions">
       <button class="actPin ${m.pinned?'pinned':''}">${I.pin}<span>${m.pinned?'Unpin':'Pin'}</span></button>
@@ -1551,7 +1694,12 @@ function card(m){
     </div>`;
   if (m.content) el.querySelector('.content').textContent = m.content;
   if (m.ai_caption || m.ocr_text) el.querySelector('.ocr').textContent = (m.ai_caption || m.ocr_text).slice(0, 200);
-  if (m.photo_path) signedUrl(m.photo_path).then(u => { if(u) el.querySelector('img.mem').src=u; });
+  if (m.photo_path){
+    const img = el.querySelector('img.mem');
+    signedUrl(m.photo_path).then(u => { if (u) img.src = u; });
+    img.onerror = () => { img.onerror = null; urlCache.delete(m.photo_path);
+      signedUrl(m.photo_path).then(u => { if (u) img.src = u; }); };
+  }
   const pinBtn = el.querySelector('.actPin');
   pinBtn.onclick = async () => {
     const newVal = !m.pinned;
@@ -1568,12 +1716,15 @@ function card(m){
   el.querySelector('.actRemind').onclick = () => openReminderModal(m);
   const mapBtn = el.querySelector('.actMap');
   if (mapBtn) mapBtn.onclick = () => window.open(directionsUrl(m.lat, m.lng, m.category === 'parking'), '_blank');
-  el.querySelector('.actDel').onclick = async () => {
-    el.style.opacity=.4;
-    const { error } = await sb.from('memories').delete().eq('id', m.id);
-    if (error){ el.style.opacity=1; return toast(error.message); }
-    if (m.photo_path) sb.storage.from('photos').remove([m.photo_path]);
-    el.remove(); tlDirty = true; toast('Deleted');
+  el.querySelector('.actDel').onclick = () => {
+    el.classList.add('hidden'); tlDirty = true;
+    const t = setTimeout(async () => {
+      const { error } = await sb.from('memories').delete().eq('id', m.id);
+      if (error){ el.classList.remove('hidden'); return toast(error.message); }
+      if (m.photo_path) sb.storage.from('photos').remove([m.photo_path]);
+      el.remove();
+    }, 5000);
+    undoToast('Deleted', () => { clearTimeout(t); el.classList.remove('hidden'); });
   };
   return el;
 }
@@ -1657,7 +1808,7 @@ $('importInput').onchange = async e => {
       if (ex) meta = await ex.parse(f, { gps: true }).catch(() => null);
       let when = meta?.DateTimeOriginal || meta?.CreateDate || new Date(f.lastModified || Date.now());
       if (!(when instanceof Date) || isNaN(when)) when = new Date();
-      const blob = await compressImage(f);
+      let blob; try { blob = await compressImage(f); } catch { continue; }
       const path = `${user.id}/${Date.now()}_${i}.jpg`;
       const { error: upErr } = await sb.storage.from('photos').upload(path, blob, { contentType: 'image/jpeg' });
       if (upErr) throw upErr;

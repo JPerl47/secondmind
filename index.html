@@ -9,6 +9,15 @@
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.png">
+<meta name="apple-mobile-web-app-title" content="SecondMind">
+<link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)" href="splash/750x1334.png">
+<link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)" href="splash/828x1792.png">
+<link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)" href="splash/1125x2436.png">
+<link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)" href="splash/1170x2532.png">
+<link rel="apple-touch-startup-image" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)" href="splash/1179x2556.png">
+<link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)" href="splash/1242x2688.png">
+<link rel="apple-touch-startup-image" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)" href="splash/1284x2778.png">
+<link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)" href="splash/1290x2796.png">
 <link rel="icon" type="image/png" href="icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -72,7 +81,7 @@
   .field{width:100%;background:var(--card);border:1px solid var(--border);border-radius:14px;
     color:var(--text);font-size:16px;padding:14px 17px;margin-bottom:12px;outline:none;
     transition:border-color .25s, box-shadow .25s, background .25s}
-  .field::placeholder{color:#586080}
+  .field::placeholder{color:#6c7492}
   .field:focus{border-color:var(--goldSoft);background:rgba(255,255,255,.045);
     box-shadow:0 0 0 4px rgba(231,200,140,.07), 0 0 24px rgba(231,200,140,.06)}
   .btn{position:relative;display:flex;align-items:center;justify-content:center;gap:8px;
@@ -159,7 +168,7 @@
   #memText{width:100%;min-height:106px;background:var(--card);border:1px solid var(--border);
     border-radius:17px;color:var(--text);font-size:16.5px;line-height:1.55;padding:16px 17px;
     resize:vertical;outline:none;transition:border-color .25s, box-shadow .25s}
-  #memText::placeholder{color:#586080}
+  #memText::placeholder{color:#6c7492}
   #memText:focus{border-color:var(--goldSoft);
     box-shadow:0 0 0 4px rgba(231,200,140,.07), 0 0 26px rgba(231,200,140,.05)}
   .capRow{display:flex;gap:10px;margin-top:12px}
@@ -204,6 +213,24 @@
   #lightboxClose{position:absolute;top:calc(env(safe-area-inset-top) + 10px);right:14px;background:rgba(255,255,255,.08);
     border:none;color:var(--text);font-size:22px;line-height:1;border-radius:50%;width:40px;height:40px;cursor:pointer}
   .pChips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 14px}
+  #settingsBack,#recoverBack,#onboardBack{position:fixed;inset:0;z-index:70;background:rgba(4,6,12,.7);
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:flex-end;justify-content:center}
+  #onboardBack{align-items:center;padding:24px}
+  #settingsBack.hidden,#recoverBack.hidden,#onboardBack.hidden{display:none}
+  #settingsSheet,.recSheet{background:#0f142a;border:1px solid var(--border2);border-bottom:none;width:100%;max-width:620px;
+    border-radius:24px 24px 0 0;padding:26px 24px calc(30px + env(safe-area-inset-bottom));max-height:86vh;overflow-y:auto}
+  @supports (height:100dvh){ #settingsSheet,.recSheet{max-height:86dvh} }
+  .setRow{display:flex;justify-content:space-between;gap:14px;align-items:center;padding:11px 2px;font-size:14px;color:var(--muted)}
+  .setLabel{font-family:'Jost',sans-serif;font-size:11px;letter-spacing:.16em;text-transform:uppercase}
+  #settingsSheet .btnGhost,#settingsSheet .btn{width:100%;margin-top:10px}
+  #onboardCard{background:#0f142a;border:1px solid var(--border2);border-radius:24px;max-width:400px;width:100%;
+    padding:34px 28px 26px;text-align:center}
+  #onboardCard h3{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:26px;margin:0 0 10px}
+  #onboardCard p{color:var(--muted);font-size:14.5px;line-height:1.65;margin:0;min-height:72px}
+  #onboardCard .btn{width:100%;margin-top:6px}
+  #onboardCard .btnGhost{width:100%;margin-top:8px}
+  .obDot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.18)}
+  .obDot.on{background:var(--gold)}
   .areaSum{font-family:'Jost',sans-serif;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
     color:var(--goldSoft);margin:2px 2px 14px}
   #pushCard{border-radius:17px;padding:17px 19px;margin:0 0 18px;border:1px solid transparent;
@@ -269,7 +296,14 @@
   #dictHint b:not(:first-child){display:inline;margin:0}
   #dictHint button{display:block;margin-top:9px;background:none;border:1px solid var(--border2);
     color:var(--text);border-radius:9px;padding:6px 14px;font-size:12px;cursor:pointer}
-  .verTag{text-align:center;color:#4a5169;font-size:11px;letter-spacing:.12em;margin:26px 0 4px}
+  .verTag{text-align:center;color:#707894;font-size:11px;letter-spacing:.12em;margin:26px 0 4px}
+  @media (prefers-reduced-motion: reduce){
+    *, *::before, *::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+  }
+  @supports (height: 100dvh){
+    #authView{min-height:100dvh}
+    #echoSheet{max-height:84dvh}
+  }
   .composerHead{display:flex;align-items:center;justify-content:space-between;margin:4px 0 14px}
   #composer{animation:rise .35s cubic-bezier(.2,.7,.3,1) both}
 
@@ -311,7 +345,7 @@
     border-top:1px solid rgba(255,255,255,.05);padding-top:10px}
   .cardActions button{display:inline-flex;align-items:center;gap:6px;background:none;border:none;
     color:var(--muted);font-size:12px;font-weight:500;letter-spacing:.03em;cursor:pointer;
-    padding:6px 11px;border-radius:9px;transition:all .18s}
+    padding:10px 12px;min-height:40px;border-radius:9px;transition:all .18s}
   .cardActions button:hover{color:var(--text);background:rgba(255,255,255,.05)}
   .cardActions button svg.i{width:14px;height:14px}
   .cardActions .actPin.pinned{color:var(--gold)}
@@ -444,8 +478,9 @@
       <button class="btn" type="submit" id="authBtn">Sign in</button>
     </form>
     <button class="btnGhost" id="authToggle">New here? Create an account</button>
+    <button class="btnGhost" id="forgotBtn" style="margin-top:2px">Forgot password?</button>
     <p class="authMsg" id="authMsg"></p>
-    <p class="verTag">SECONDMIND · BUILD 30</p>
+    <p class="verTag">SECONDMIND · BUILD 31</p>
   </div>
 </div>
 
@@ -453,9 +488,9 @@
   <header class="top">
     <div class="brand"><img src="mark.png" alt=""/><span class="wordmark">SecondMind</span></div>
     <div class="hdrBtns">
-      <button class="iconBtn" id="importBtn" title="Import photos from your library"><svg class="i" viewBox="0 0 24 24"><path d="M12 17V5M6 9l6-6 6 6M4 21h16"/></svg></button>
-      <button class="iconBtn" id="exportBtn" title="Export my data"><svg class="i" viewBox="0 0 24 24"><path d="M12 3v12M6 11l6 6 6-6M4 21h16"/></svg></button>
-      <button class="iconBtn" id="signOutBtn">Sign out</button>
+      <button class="iconBtn" id="importBtn" aria-label="Import photos" title="Import photos from your library"><svg class="i" viewBox="0 0 24 24"><path d="M12 17V5M6 9l6-6 6 6M4 21h16"/></svg></button>
+      <button class="iconBtn" id="exportBtn" aria-label="Export my data" title="Export my data"><svg class="i" viewBox="0 0 24 24"><path d="M12 3v12M6 11l6 6 6-6M4 21h16"/></svg></button>
+      <button class="iconBtn" id="settingsBtn" aria-label="Settings" title="Settings"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.01a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55h.01a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.01a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/></svg></button>
     </div>
   </header>
   <main>
@@ -567,12 +602,12 @@
       <p class="hint">Create one from any memory with “Remind me”, or start fresh.</p>
       <button class="btnGhost" id="newRemBtn" style="margin:4px 0 16px">+ New reminder</button>
       <div id="remindersList"></div>
-      <p class="verTag">SECONDMIND · BUILD 30</p>
+      <p class="verTag">SECONDMIND · BUILD 31</p>
     </section>
 
   </main>
 
-  <button id="homeFab" class="hidden" title="Home"><img src="mark.png" alt=""/></button>
+  <button id="homeFab" class="hidden" aria-label="Home" title="Home"><img src="mark.png" alt=""/></button>
 </div>
 
 <div id="echoBack" class="hidden">
@@ -581,8 +616,8 @@
     <h3 style="font-family:'Cormorant Garamond',serif;font-weight:500;font-size:24px;margin:0 0 16px">Tell me, or <em style="background:linear-gradient(100deg,#ecca8d,#f0ddb4);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-style:italic">ask</em> me anything.</h3>
     <div class="searchRow">
       <input class="field" id="echoInput" type="text" placeholder="I parked on level 3… / Where did I park?">
-      <button class="sq" id="echoMic" title="Voice"><svg class="i" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
-      <button class="sq primary" id="echoGo"><svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+      <button class="sq" id="echoMic" aria-label="Speak" title="Voice"><svg class="i" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+      <button class="sq primary" id="echoGo" aria-label="Go"><svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
     </div>
     <p class="hint" style="margin:12px 2px 0">Ask a question · save a thought · or say where to go, like “find my car”</p>
     <div class="eyebrow deckHead">Capture</div>
@@ -620,6 +655,42 @@
   <div class="aiEyebrow">Your memory says</div>
   <div class="aiText" id="echoAnswerBody"></div>
   <button id="echoAnswerMore">See matching memories →</button>
+</div>
+
+<div id="settingsBack" class="hidden">
+  <div id="settingsSheet">
+    <div class="eyebrow" style="margin:0 0 14px">Settings</div>
+    <div class="setRow"><span class="setLabel">Signed in as</span><span id="setEmail" style="color:var(--text)"></span></div>
+    <div class="setRow"><span class="setLabel">Notifications</span><span id="setPush">—</span></div>
+    <button class="btnGhost" id="setPushBtn">Turn on notifications</button>
+    <button class="btnGhost" id="setPassBtn">Change password</button>
+    <div id="setPassWrap" class="hidden">
+      <input class="field" id="setPass1" type="password" placeholder="New password (8+ characters)" autocomplete="new-password">
+      <button class="btn" id="setPassSave">Update password</button>
+    </div>
+    <button class="btnGhost" id="setExportBtn">Export my data</button>
+    <button class="btnGhost" id="setSignOut">Sign out</button>
+    <p class="hint" style="margin-top:16px">Private by design — your memories live in your own encrypted account, are never shared or sold, and photos are stored in a private vault only you can open. Deleted memories rest in a 30-day trash before disappearing forever.</p>
+    <p class="verTag" style="margin:14px 0 0">SECONDMIND · BUILD 31</p>
+  </div>
+</div>
+
+<div id="recoverBack" class="hidden">
+  <div id="settingsSheet2" class="recSheet">
+    <div class="eyebrow" style="margin:0 0 12px">Set a new password</div>
+    <input class="field" id="recPass" type="password" placeholder="New password (8+ characters)" autocomplete="new-password">
+    <button class="btn" id="recSave">Save new password</button>
+  </div>
+</div>
+
+<div id="onboardBack" class="hidden">
+  <div id="onboardCard">
+    <img src="mark.png" alt="" style="width:64px;margin:0 auto 18px;display:block;border-radius:50%">
+    <div id="obSlides"></div>
+    <div id="obDots" style="display:flex;gap:7px;justify-content:center;margin:18px 0"></div>
+    <button class="btn" id="obNext">Next</button>
+    <button class="btnGhost" id="obSkip">Skip</button>
+  </div>
 </div>
 
 <div id="modalBack" class="hidden">
@@ -750,12 +821,76 @@ async function doAuth(){
   } catch(e){ setAuthMsg(e.message || 'Something went wrong.', 'err'); }
   $('authBtn').disabled = false;
 }
+$('settingsBtn') && ($('settingsBtn').onclick = () => openSettings());
+async function openSettings(){
+  const { data: { user } } = await sb.auth.getUser();
+  $('setEmail').textContent = user?.email || '—';
+  const on = PUSH_OK && Notification.permission === 'granted';
+  $('setPush').textContent = on ? 'On' : (PUSH_OK && Notification.permission === 'denied' ? 'Blocked in phone settings' : 'Off');
+  $('setPushBtn').style.display = on ? 'none' : '';
+  $('setPassWrap').classList.add('hidden');
+  $('settingsBack').classList.remove('hidden');
+}
+$('settingsBack').onclick = e => { if (e.target.id === 'settingsBack') $('settingsBack').classList.add('hidden'); };
+$('setPushBtn').onclick = () => { enablePush().then(() => openSettings()); };
+$('setPassBtn').onclick = () => $('setPassWrap').classList.toggle('hidden');
+$('setPassSave').onclick = async () => {
+  const pw = $('setPass1').value;
+  if (pw.length < 8) return toast('Use at least 8 characters');
+  const { error } = await sb.auth.updateUser({ password: pw });
+  if (error) return toast(error.message);
+  $('setPass1').value = ''; $('setPassWrap').classList.add('hidden');
+  toast('Password updated');
+};
+$('setExportBtn').onclick = () => { $('settingsBack').classList.add('hidden'); $('exportBtn').click(); };
+$('setSignOut').onclick = () => { $('settingsBack').classList.add('hidden'); sb.auth.signOut(); };
+$('forgotBtn').onclick = async () => {
+  const email = $('email').value.trim();
+  if (!email) return setAuthMsg('Type your email above first, then tap Forgot password.', 'err');
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: 'https://jperl47.github.io/secondmind/' });
+  if (error) return setAuthMsg(error.message, 'err');
+  setAuthMsg('Reset link sent — check your email and open the link on this device.', 'ok');
+};
+$('recSave').onclick = async () => {
+  const pw = $('recPass').value;
+  if (pw.length < 8) return toast('Use at least 8 characters');
+  const { error } = await sb.auth.updateUser({ password: pw });
+  if (error) return toast(error.message);
+  $('recoverBack').classList.add('hidden');
+  toast('Password updated — welcome back');
+};
 $('signOutBtn').onclick = () => sb.auth.signOut();
+
+/* ---------- onboarding ---------- */
+const OB_SLIDES = [
+  ['Speak it. Snap it. Saved.', 'Tap any circle on the wheel to capture something — or tap the glowing echo in the middle and just talk.'],
+  ['Ask anything, get answers.', '“Where did I park?” “How much was the blender?” The echo answers from your own memories, in one clear sentence.'],
+  ['Make it yours.', 'Add SecondMind to your home screen (Share → Add to Home Screen), then turn on notifications under Alerts so reminders reach you.'],
+];
+let obIdx = 0;
+function renderOb(){
+  $('obSlides').innerHTML = '<h3></h3><p></p>';
+  $('obSlides').querySelector('h3').textContent = OB_SLIDES[obIdx][0];
+  $('obSlides').querySelector('p').textContent = OB_SLIDES[obIdx][1];
+  $('obDots').innerHTML = OB_SLIDES.map((_, i) => `<span class="obDot${i === obIdx ? ' on' : ''}"></span>`).join('');
+  $('obNext').textContent = obIdx === OB_SLIDES.length - 1 ? 'Begin' : 'Next';
+}
+function maybeOnboard(){
+  if (localStorage.getItem('sm_onboard') === '1') return;
+  obIdx = 0; renderOb();
+  $('onboardBack').classList.remove('hidden');
+}
+$('obNext').onclick = () => {
+  if (obIdx < OB_SLIDES.length - 1){ obIdx++; renderOb(); }
+  else { localStorage.setItem('sm_onboard', '1'); $('onboardBack').classList.add('hidden'); }
+};
+$('obSkip').onclick = () => { localStorage.setItem('sm_onboard', '1'); $('onboardBack').classList.add('hidden'); };
 
 let uid = null, appInited = false, authSub = null;
 function bindAuthState(){
   if (authSub){ try { authSub.unsubscribe(); } catch {} }
   const { data } = sb.auth.onAuthStateChange((ev, session) => {
+    if (ev === 'PASSWORD_RECOVERY'){ $('recoverBack').classList.remove('hidden'); }
     const authed = !!session;
     uid = session?.user?.id || null;
     $('authView').classList.toggle('hidden', authed);
@@ -771,6 +906,11 @@ function bindAuthState(){
     initCapture(); loadTimeline(true); loadReminders(); loadOnThisDay(); flushQueue(); loadFindCar();
     setTimeout(resyncPush, 1200);
     setTimeout(() => sb.functions.invoke('ai', { body: { action: 'backfill_meta' } }).catch(()=>{}), 5000);
+    setTimeout(maybeOnboard, 600);
+    const quick = new URLSearchParams(location.search).get('quick');
+    if (quick === 'park') setTimeout(() => { goTab('capture'); document.querySelector('.orb[data-act="park"]')?.click(); }, 400);
+    if (quick === 'ask') setTimeout(() => goTab('ask'), 400);
+    if (quick) try { history.replaceState(null, '', location.pathname); } catch {}
     sb.functions.invoke('ai', { body: { action: 'backfill' } }).catch(()=>{});
     setTimeout(() => sb.functions.invoke('ai', { body: { action: 'search', q: 'warm up', limit: 1 } }).catch(()=>{}), 2500);
   });

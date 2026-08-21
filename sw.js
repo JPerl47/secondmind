@@ -1,6 +1,6 @@
 /* SecondMind service worker — offline shell + cached assets */
-const CACHE = 'secondmind-v30';
-const ASSETS = ['./', 'index.html', 'manifest.json', 'icon.png', 'icon-512.png', 'mark.png', 'logo.jpg'];
+const CACHE = 'secondmind-v31';
+const ASSETS = ['./', 'index.html', 'manifest.json', 'icon.png', 'icon-192.png', 'icon-512.png', 'icon-maskable.png', 'mark.png', 'logo.jpg'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));

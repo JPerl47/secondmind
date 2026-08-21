@@ -480,7 +480,7 @@
     <button class="btnGhost" id="authToggle">New here? Create an account</button>
     <button class="btnGhost" id="forgotBtn" style="margin-top:2px">Forgot password?</button>
     <p class="authMsg" id="authMsg"></p>
-    <p class="verTag">SECONDMIND · BUILD 31</p>
+    <p class="verTag">SECONDMIND · BUILD 32</p>
   </div>
 </div>
 
@@ -602,7 +602,7 @@
       <p class="hint">Create one from any memory with “Remind me”, or start fresh.</p>
       <button class="btnGhost" id="newRemBtn" style="margin:4px 0 16px">+ New reminder</button>
       <div id="remindersList"></div>
-      <p class="verTag">SECONDMIND · BUILD 31</p>
+      <p class="verTag">SECONDMIND · BUILD 32</p>
     </section>
 
   </main>
@@ -671,7 +671,7 @@
     <button class="btnGhost" id="setExportBtn">Export my data</button>
     <button class="btnGhost" id="setSignOut">Sign out</button>
     <p class="hint" style="margin-top:16px">Private by design — your memories live in your own encrypted account, are never shared or sold, and photos are stored in a private vault only you can open. Deleted memories rest in a 30-day trash before disappearing forever.</p>
-    <p class="verTag" style="margin:14px 0 0">SECONDMIND · BUILD 31</p>
+    <p class="verTag" style="margin:14px 0 0">SECONDMIND · BUILD 32</p>
   </div>
 </div>
 
@@ -859,8 +859,6 @@ $('recSave').onclick = async () => {
   $('recoverBack').classList.add('hidden');
   toast('Password updated — welcome back');
 };
-$('signOutBtn').onclick = () => sb.auth.signOut();
-
 /* ---------- onboarding ---------- */
 const OB_SLIDES = [
   ['Speak it. Snap it. Saved.', 'Tap any circle on the wheel to capture something — or tap the glowing echo in the middle and just talk.'],

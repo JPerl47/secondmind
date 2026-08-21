@@ -190,6 +190,10 @@
   /* Radial hub */
   .hubTitle{text-align:center}
   .hubSub{text-align:center;color:var(--muted);font-size:12.5px;letter-spacing:.03em;margin:-16px 2px 6px}
+  .vaultStats{font-family:'Jost',sans-serif;font-size:10.5px;font-weight:500;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--goldSoft);margin:-16px 2px 16px}
+  .colCard.dim{opacity:.45}
+  .colCard.dim:hover{opacity:.8}
   #hub{position:relative;width:min(88vw,400px);height:min(88vw,400px);margin:14px auto 6px;
     animation:rise .5s cubic-bezier(.2,.7,.3,1) both}
   .hubRing{position:absolute;inset:10.5%;border-radius:50%;
@@ -421,7 +425,7 @@
     </form>
     <button class="btnGhost" id="authToggle">New here? Create an account</button>
     <p class="authMsg" id="authMsg"></p>
-    <p class="verTag">SECONDMIND · BUILD 26</p>
+    <p class="verTag">SECONDMIND · BUILD 27</p>
   </div>
 </div>
 
@@ -454,7 +458,7 @@
         <button class="orb" style="--a:150deg" data-act="receipt"><svg class="i" viewBox="0 0 24 24"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2V2z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg><span>Receipt</span></button>
         <button class="orb" style="--a:30deg" data-act="person"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6.5 8-6.5s8 2.5 8 6.5"/></svg><span>Person</span></button>
         <button class="orb nav" style="--a:60deg" data-nav="ask"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4.5 4.5"/></svg><span>Ask</span></button>
-        <button class="orb nav" style="--a:90deg" data-nav="timeline"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 3v4M16 3v4"/></svg><span>Memories</span></button>
+        <button class="orb nav" style="--a:90deg" data-nav="timeline"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 3v4M16 3v4"/></svg><span>Vault</span></button>
         <button class="orb nav" style="--a:120deg" data-nav="reminders"><svg class="i" viewBox="0 0 24 24"><path d="M18 9a6 6 0 1 0-12 0c0 6.2-2.5 7.5-2.5 7.5h17S18 15.2 18 9zM10.3 20.5a2 2 0 0 0 3.4 0"/></svg><span>Alerts</span></button>
       </div>
 
@@ -511,7 +515,11 @@
 
     <!-- TIMELINE -->
     <section id="tab-timeline" class="hidden">
-      <h2 class="sect">Your <em>memories</em></h2>
+      <h2 class="sect">Your <em>vault</em></h2>
+      <p class="vaultStats" id="vaultStats"></p>
+      <div class="searchRow" style="margin-bottom:13px">
+        <input class="field" id="vaultSearch" type="search" placeholder="Search everything in your vault…" autocomplete="off">
+      </div>
       <div class="viewToggle">
         <button class="iconBtn" id="listViewBtn"><svg class="i" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>List</button>
         <button class="iconBtn on" id="colViewBtn"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></svg>Collections</button>
@@ -534,7 +542,7 @@
       <h2 class="sect">Gentle <em>reminders</em></h2>
       <p class="hint">Create one from any memory with “Remind me”.</p>
       <div id="remindersList"></div>
-      <p class="verTag">SECONDMIND · BUILD 26</p>
+      <p class="verTag">SECONDMIND · BUILD 27</p>
     </section>
 
   </main>
@@ -567,8 +575,8 @@
     <div class="eyebrow deckHead">Go to</div>
     <div class="deckGrid">
       <button class="deckBtn" data-deck="tab:ask"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4.5 4.5"/></svg>Ask</button>
-      <button class="deckBtn" data-deck="view:list"><svg class="i" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>Memories</button>
-      <button class="deckBtn" data-deck="view:col"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></svg>Collections</button>
+      <button class="deckBtn" data-deck="view:list"><svg class="i" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>Recent</button>
+      <button class="deckBtn" data-deck="view:col"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></svg>Vault</button>
       <button class="deckBtn" data-deck="view:map"><svg class="i" viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/></svg>Map</button>
       <button class="deckBtn" data-deck="tab:reminders"><svg class="i" viewBox="0 0 24 24"><path d="M18 9a6 6 0 1 0-12 0c0 6.2-2.5 7.5-2.5 7.5h17S18 15.2 18 9zM10.3 20.5a2 2 0 0 0 3.4 0"/></svg>Alerts</button>
       <button class="deckBtn" data-deck="car:go"><svg class="i" viewBox="0 0 24 24"><path d="M12 2 19 21l-7-4-7 4 7-19z"/></svg>My car</button>
@@ -739,7 +747,7 @@ function goTab(tab){
   if (tab==='timeline'){
     if (tlView === 'map') renderMap();
     else if (tlView === 'col') loadCollections();
-    else if (tlCat !== null || tlDirty || Date.now() - tlLoadedAt > 60000) loadTimeline(true);
+    else if (tlCat !== null || tlKind !== null || tlDirty || Date.now() - tlLoadedAt > 60000) loadTimeline(true);
   }
   if (tab==='reminders') loadReminders();
   if (tab==='ask') { renderAskChips(); $('searchInput').focus(); }
@@ -1100,7 +1108,7 @@ async function routeText(raw){
     window.open(directionsUrl(carSpot.lat, carSpot.lng, true), '_blank'); return;
   }
   if (words <= 5 && /\bmap\b/.test(l)){ goTab('timeline'); setView('map'); return; }
-  if (words <= 5 && /(collections?|library)/.test(l)){ goTab('timeline'); setView('col'); return; }
+  if (words <= 5 && /(collections?|library|vault)/.test(l)){ goTab('timeline'); setView('col'); return; }
   if (words <= 5 && /(timeline|history)/.test(l)){ goTab('timeline'); setView('list'); return; }
   if (words <= 5 && /(reminders?|alerts?)/.test(l)){ goTab('reminders'); return; }
   // "take me to / open / go to <orb>"
@@ -1325,19 +1333,19 @@ async function askForAnswer(q, fromIso, toIso){
 }
 
 /* ---------- timeline ---------- */
-let tlOffset = 0, tlCat = null, tlView = 'col', pinnedShown = false;
+let tlOffset = 0, tlCat = null, tlKind = null, tlView = 'col', pinnedShown = false;
 let tlDirty = true, tlLoadedAt = 0;
 const PAGE_SIZE = 40;
 function buildFilterRow(){
   const box = $('filterRow'); box.innerHTML='';
   const all = document.createElement('button');
   all.className = 'chip' + (tlCat===null?' on':''); all.textContent = 'All';
-  all.onclick = () => { tlCat = null; tlView==='map' ? (buildFilterRow(), renderMap()) : loadTimeline(true); };
+  all.onclick = () => { tlCat = null; tlKind = null; tlView==='map' ? (buildFilterRow(), renderMap()) : loadTimeline(true); };
   box.appendChild(all);
   Object.entries(CATS).forEach(([cat, emo]) => {
     const b = document.createElement('button');
     b.className = 'chip cat' + (tlCat===cat?' on':''); b.textContent = catLabel(cat);
-    b.onclick = () => { tlCat = (tlCat===cat)?null:cat; tlView==='map' ? (buildFilterRow(), renderMap()) : loadTimeline(true); };
+    b.onclick = () => { tlCat = (tlCat===cat)?null:cat; tlKind = null; tlView==='map' ? (buildFilterRow(), renderMap()) : loadTimeline(true); };
     box.appendChild(b);
   });
 }
@@ -1346,6 +1354,7 @@ $('colViewBtn').onclick = () => setView('col');
 $('mapViewBtn').onclick = () => setView('map');
 function setView(v){
   tlView = v;
+  if ($('vaultSearch').value) $('vaultSearch').value = '';
   $('listViewBtn').classList.toggle('on', v==='list');
   $('colViewBtn').classList.toggle('on', v==='col');
   $('mapViewBtn').classList.toggle('on', v==='map');
@@ -1362,26 +1371,70 @@ function setView(v){
 async function loadCollections(){
   const box = $('colGrid');
   box.innerHTML = '<p class="empty" style="grid-column:1/-1"><span class="spinner"></span></p>';
-  const { data, error } = await sb.rpc('category_counts');
-  if (error || !data?.length){
-    box.innerHTML = '<p class="empty" style="grid-column:1/-1">Nothing collected yet.</p>'; return;
-  }
+  const [cc, ph, pn, tot] = await Promise.all([
+    sb.rpc('category_counts'),
+    sb.from('memories').select('id', { count:'exact', head:true }).eq('kind','photo'),
+    sb.from('memories').select('id', { count:'exact', head:true }).eq('pinned', true),
+    sb.from('memories').select('id', { count:'exact', head:true }),
+  ]);
+  const counts = {};
+  for (const c of (cc.data || [])) counts[c.category] = c;
+  const total = tot.count || 0;
+  $('vaultStats').textContent = total + (total===1?' memory':' memories') +
+    ' · ' + (ph.count||0) + ' photos · ' + (pn.count||0) + ' pinned';
   box.innerHTML = '';
-  for (const c of data){
+  const mk = (emo, name, sub, sample, fn, dim) => {
     const el = document.createElement('button');
-    el.className = 'colCard';
+    el.className = 'colCard' + (dim ? ' dim' : '');
     el.innerHTML = `
       <span class="cTop"><span class="mono"></span>
         <span><span class="cName"></span><span class="cCount" style="display:block"></span></span></span>
       <span class="cSample"></span>`;
-    el.querySelector('.mono').textContent = (c.category || '?')[0].toUpperCase();
-    el.querySelector('.cName').textContent = catLabel(c.category);
-    el.querySelector('.cCount').textContent =
-      c.n + (c.n == 1 ? ' memory' : ' memories') + ' · ' + timeAgo(c.latest);
-    el.querySelector('.cSample').textContent = c.sample || '';
-    el.onclick = () => { tlCat = c.category; setView('list'); };
+    el.querySelector('.mono').textContent = emo;
+    el.querySelector('.cName').textContent = name;
+    el.querySelector('.cCount').textContent = sub;
+    el.querySelector('.cSample').textContent = sample;
+    el.onclick = fn;
     box.appendChild(el);
+  };
+  mk('🗂️', 'Everything', total + (total===1?' memory':' memories'), '',
+     () => { tlCat = null; tlKind = null; setView('list'); });
+  if (ph.count) mk('📷', 'Photos', ph.count + (ph.count===1?' photo':' photos'), '',
+     () => { tlCat = null; tlKind = 'photo'; setView('list'); });
+  if (pn.count) mk('⭐', 'Pinned', pn.count + ' pinned', '',
+     () => { tlCat = null; tlKind = 'pinned'; setView('list'); });
+  for (const cat of Object.keys(CATS)){
+    const c = counts[cat];
+    mk(CATS[cat], catLabel(cat),
+       c ? c.n + (c.n==1?' memory':' memories') + ' · ' + timeAgo(c.latest) : 'Empty',
+       c?.sample || '',
+       () => { tlCat = cat; tlKind = null; setView('list'); },
+       !c);
   }
+}
+let vsSeq = 0, vsTimer = null;
+$('vaultSearch').addEventListener('input', () => {
+  clearTimeout(vsTimer); vsTimer = setTimeout(runVaultSearch, 350);
+});
+async function runVaultSearch(){
+  const q = $('vaultSearch').value.trim();
+  if (!q){ setView(tlView); return; }
+  const seq = ++vsSeq;
+  ['colGrid','mapWrap','filterRow','pinnedWrap','moreBtn'].forEach(id => $(id).classList.add('hidden'));
+  const list = $('timelineList');
+  list.classList.remove('hidden');
+  list.innerHTML = '<p class="empty"><span class="spinner"></span></p>';
+  const [kw, sem] = await Promise.all([
+    sb.rpc('search_memories', { q, from_ts: null, to_ts: null }),
+    sb.functions.invoke('ai', { body: { action: 'search', q } }).catch(() => null),
+  ]);
+  if (seq !== vsSeq || !$('vaultSearch').value.trim()) return;
+  const seen = new Set(); const rows = [];
+  for (const r of (kw.data || [])) if (!seen.has(r.id)){ seen.add(r.id); rows.push(r); }
+  for (const r of (sem?.data?.matches || [])) if (!seen.has(r.id)){ seen.add(r.id); rows.push({ ...r, _sem: true }); }
+  if (!rows.length){ list.innerHTML = '<p class="empty">Nothing found for “' + escapeHtml(q) + '”.</p>'; return; }
+  list.innerHTML = '';
+  for (const m of rows) list.appendChild(card(m));
 }
 async function loadPinned(){
   const { data } = await sb.from('memories').select('*').eq('pinned', true)
@@ -1397,10 +1450,12 @@ async function loadTimeline(reset){
   if (reset){ tlOffset=0; $('timelineList').innerHTML=''; delete $('timelineList').dataset.lastDay; loadPinned(); }
   let qy = sb.from('memories').select('*').order('happened_at', { ascending:false });
   if (tlCat) qy = qy.eq('category', tlCat);
+  if (tlKind === 'photo') qy = qy.eq('kind', 'photo');
+  else if (tlKind === 'pinned') qy = qy.eq('pinned', true);
   const { data, error } = await qy.range(tlOffset, tlOffset+PAGE_SIZE-1);
   if (error){ toast(error.message); return; }
   if (!data.length && tlOffset===0){
-    $('timelineList').innerHTML = '<p class="empty">Nothing here yet.<br>Capture your first memory in the Capture tab.</p>';
+    $('timelineList').innerHTML = '<p class="empty">Nothing here yet.<br>Tap a circle on the home screen to save your first memory.</p>';
     $('moreBtn').classList.add('hidden'); return;
   }
   let lastDay = tlOffset ? ($('timelineList').dataset.lastDay || '') : '';
@@ -1416,7 +1471,7 @@ async function loadTimeline(reset){
   }
   $('timelineList').dataset.lastDay = lastDay;
   tlOffset += data.length;
-  if (tlCat === null && tlView === 'list'){ tlLoadedAt = Date.now(); tlDirty = false; }
+  if (tlCat === null && tlKind === null && tlView === 'list'){ tlLoadedAt = Date.now(); tlDirty = false; }
   $('moreBtn').classList.toggle('hidden', data.length < PAGE_SIZE || tlView==='map');
 }
 $('moreBtn').onclick = () => loadTimeline(false);
